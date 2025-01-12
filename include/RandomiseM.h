@@ -2,6 +2,6 @@
 #define RANDOMISEM_H
 #include<stdlib.h>
 
-void randomiseM(int m, int n, double* A, int ldA);
+void randomiseM(int, int, double*, int);
 
 #endif

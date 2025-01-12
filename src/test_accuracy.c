@@ -9,6 +9,11 @@
   where diff is a double representing biggest difference over all trials for size n.
  */
 #include "RandomiseM.h"
+#include "testgemm.h"
+#include "mdiff.h"
+#include <stdio.h>
+#include <string.h>
+#include <immintrin.h>
 
 // Prototype of BLIS dgemm
 void dgemm_(char*, char*, int*, int*, int*,
@@ -21,10 +26,10 @@ void test_accuracy(int init_n, int final_n, int inc, int reps){
   double worst;
   for (int n = init_n; n <= final_n; n += inc){
     sq = n * n;
-    double* A = (double*) malloc(sq * sizeof(double));
-    double* B = (double*) malloc(sq * sizeof(double));
-    double* C = (double*) malloc(sq * sizeof(double));
-    double* C_ref = (double*) malloc(sq * sizeof(double));
+    double* A = (double*) _mm_malloc(sq * sizeof(double), 64);
+    double* B = (double*) _mm_malloc(sq * sizeof(double), 64);
+    double* C = (double*) _mm_malloc(sq * sizeof(double), 64);
+    double* C_ref = (double*) _mm_malloc(sq * sizeof(double), 64);
     
     if (!A || !B || !C){
       fprintf(stderr, "Failed to allocate memory to matrices.\n");
@@ -34,26 +39,33 @@ void test_accuracy(int init_n, int final_n, int inc, int reps){
     randomiseM(n, n, A, n);
     randomiseM(n, n, B, n);
     randomiseM(n, n, C, n);
-    memcpy(C_ref, C, n * ldC * sizeof(double));
+    memcpy(C_ref, C, sq * sizeof(double));
     
     worst = 0.;
+    double one = 1.0;
     for (int t = 0; t < reps; ++t){
       testgemm(n, n, n, A, n, B, n, C, n);
       dgemm_("No transpose", "No transpose", &n, &n, &n,
-	     &1.0, A, &ldA,
-	     B, &ldB,
-	     &1.0, C_ref, &ldC);
+	     &one, A, &n,
+	     B, &n,
+	     &one, C_ref, &n);
       
       double err = mdiff(n, n, C, n, C_ref, n);
       if (err > worst) worst = err;
     }
 
-    printf("%d %f\n", n, worst);
+    printf("%d %e\n", n, worst);
 
     fflush(stdout);
-    free(A);
-    free(B);
-    free(C);
-    free(C_ref);
+    _mm_free(A);
+    _mm_free(B);
+    _mm_free(C);
+    _mm_free(C_ref);
   }
+}
+
+int main(void){
+  test_accuracy(48, 960, 48, 3);
+
+  return 0;
 }

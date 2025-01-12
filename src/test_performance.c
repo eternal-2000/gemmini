@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <immintrin.h>
 #include "test_performance.h"
 #include "testgemm.h"
 
@@ -33,10 +34,10 @@ void test_perf(int init_n, int final_n, int inc, int reps){
     gflops = 2 * sq * n * 1e-09; // Gigaflop count for n x n matrix multiplication 
   
     /* Initialise matrices with random entries */
-    double* A = (double*) malloc(sq * sizeof(double)); 
-    double* B = (double*) malloc(sq * sizeof(double));
-    double* C = (double*) malloc(sq * sizeof(double));
-    double* C_ref = (double*) malloc(sq * sizeof(double));
+    double* A = (double*) _mm_malloc(sq * sizeof(double), 64); 
+    double* B = (double*) _mm_malloc(sq * sizeof(double), 64);
+    double* C = (double*) _mm_malloc(sq * sizeof(double), 64);
+    double* C_ref = (double*) _mm_malloc(sq * sizeof(double), 64);
     
     if (!A || !B || !C){
       fprintf(stderr, "Failed to allocate memory to matrices.\n");
@@ -78,10 +79,10 @@ void test_perf(int init_n, int final_n, int inc, int reps){
     printf("%d %f %f\n", n, best, best_ref);
 
     fflush(stdout);
-    free(A);
-    free(B);
-    free(C);
-    free(C_ref);
+    _mm_free(A);
+    _mm_free(B);
+    _mm_free(C);
+    _mm_free(C_ref);
   }
 }
 

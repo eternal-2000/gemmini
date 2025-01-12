@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(RGeMM C) # C only, for now
+project(RGeMM C) 
 
 # Check in /include for headers
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -47,9 +47,53 @@ set(SHARED_SOURCES
   src/testgemm.c
   src/RandomiseM.c
   src/detgmm.c
+  src/packing.c
   src/kernel4x4.c
   src/kernel8x4.c
   src/kernel8x8.c
+  src/kernel12x4.c
+  src/kernel4x12.c
+)
+
+##################################################
+# Compile-time constants
+##################################################
+
+# Default values for parameters, chosen for Ryzen 5600X
+set(MR 8 CACHE STRING "Register row size")
+if(MR STREQUAL "OFF")
+  set(MR 4)
+endif()
+
+set(NR 4 CACHE STRING "Register column size")
+if(NR STREQUAL "OFF")
+  set(NR 4)
+endif()
+
+#set(KR 4 CACHE STRING "Register depth")
+set(MC 144 CACHE STRING "Cache row size")
+if(MC STREQUAL "OFF")
+  set(MC 144)
+endif()
+
+set(NC 144 CACHE STRING "Cache column size")
+if(NC STREQUAL "OFF")
+  set(NC 144)
+endif()
+
+set(KC 144 CACHE STRING "Cache depth")
+if(KC STREQUAL "OFF")
+  set(KC 144)
+endif()
+
+# Add compile definitions with defaults or user overrides
+target_compile_definitions(shared_settings INTERFACE
+  MR=${MR}
+  NR=${NR}
+  KR=${KR}
+  MC=${MC}
+  NC=${NC}
+  KC=${KC}
 )
 
 ##################################################

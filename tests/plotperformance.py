@@ -94,7 +94,7 @@ def runMM(name: str, init_n: int, final_n: int, inc: int = 48, reps: int = 3,
         raise
 
     except ValueError as err:
-        print(f"Error parsing output of {name} with parameters {init_n, final_n, inc, reps}: err",
+        print(f"Error parsing output of {name} with parameters {init_n, final_n, inc, reps}: {err}",
               file = sys.stderr)
         raise
         

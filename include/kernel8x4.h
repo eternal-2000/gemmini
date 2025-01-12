@@ -2,5 +2,5 @@
 #define KERNEL8X4_H
 
 #include<immintrin.h>
-void kernel8x4(int, double*, int, double*, int, double*, int);
+void kernel8x4(int, double*, double*, double*, int);
 #endif
