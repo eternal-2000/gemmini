@@ -42,17 +42,35 @@ target_link_libraries(shared_settings INTERFACE
   OpenMP::OpenMP_C
 )
 
-# Source files shared among both driver and accuracy tests
+# Source files shared among both performance and accuracy tests
 set(SHARED_SOURCES
   src/testgemm.c
-  src/RandomiseM.c
   src/detgmm.c
-  src/packing.c
-  src/kernel4x4.c
-  src/kernel8x4.c
-  src/kernel8x8.c
-  src/kernel12x4.c
-  src/kernel4x12.c
+  src/gentools/packing.c
+  src/gentools/RandomiseM.c
+  src/gentools/nextbit.c
+  src/transpose/transpose.c
+  src/kernels/kernel4x4.c
+  src/kernels/kernel8x4.c
+  src/kernels/kernel8x8.c
+  src/kernels/kernel12x4.c
+  src/kernels/kernel12x8.c
+  src/kernels/kernel4x12.c
+  src/kernels/kernel16x4.c  
+)
+
+# Files needed for transposition
+set(TRANSPOSE_SOURCES
+  src/transpose/transpose.c
+  src/gentools/nextbit.c
+  src/gentools/print_matrix.c
+)
+
+# Files needed for sketching
+set(SKETCH_SOURCES
+  src/sketching/sketch.c
+  src/sketching/select.c
+  src/gentools/print_matrix.c
 )
 
 ##################################################
@@ -62,7 +80,7 @@ set(SHARED_SOURCES
 # Default values for parameters, chosen for Ryzen 5600X
 set(MR 8 CACHE STRING "Register row size")
 if(MR STREQUAL "OFF")
-  set(MR 4)
+  set(MR 8)
 endif()
 
 set(NR 4 CACHE STRING "Register column size")
@@ -71,33 +89,32 @@ if(NR STREQUAL "OFF")
 endif()
 
 #set(KR 4 CACHE STRING "Register depth")
-set(MC 144 CACHE STRING "Cache row size")
+set(MC 512 CACHE STRING "Cache row size")
 if(MC STREQUAL "OFF")
-  set(MC 144)
+  set(MC 512)
 endif()
 
-set(NC 144 CACHE STRING "Cache column size")
+set(NC 512 CACHE STRING "Cache column size")
 if(NC STREQUAL "OFF")
-  set(NC 144)
+  set(NC 512)
 endif()
 
-set(KC 144 CACHE STRING "Cache depth")
+set(KC 512 CACHE STRING "Cache depth")
 if(KC STREQUAL "OFF")
-  set(KC 144)
+  set(KC 512)
 endif()
 
 # Add compile definitions with defaults or user overrides
 target_compile_definitions(shared_settings INTERFACE
   MR=${MR}
   NR=${NR}
-  KR=${KR}
   MC=${MC}
   NC=${NC}
   KC=${KC}
 )
 
 ##################################################
-# Main driver program
+# Main driver program - comparison with BLAS
 ##################################################
 
 add_executable(driver
@@ -114,7 +131,7 @@ option(CHECK_ACCURACY "Build accuracy tests" ON)
 if(CHECK_ACCURACY)
   add_executable(test_accuracy
     src/test_accuracy.c
-    src/mdiff.c
+    src/gentools/mdiff.c
     ${SHARED_SOURCES}
   )
 
@@ -127,8 +144,43 @@ if(CHECK_ACCURACY)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Testing accuracy against BLIS reference implementation..."
   )
-
 endif()
+
+##################################################
+# Solo testing - esp. used for autotuning
+##################################################
+
+add_executable(solo_test
+  src/solo_test.c
+  ${SHARED_SOURCES}
+  src/gentools/argcount.c
+)
+
+target_link_libraries(solo_test PRIVATE shared_settings)
+
+##################################################
+# Random sketching
+##################################################
+
+#add_executable(sketch_test
+#  src/sketching/sketch_test.c
+#  src/RandomiseM.c
+#  ${SKETCH_SOURCES}
+#)
+
+##################################################
+# Transposition
+##################################################
+
+add_executable(transpose_test
+  src/transpose/transpose_test.c
+  ${TRANSPOSE_SOURCES}
+  src/gentools/print_matrix.c
+  src/gentools/RandomiseM.c
+  src/gentools/argcount.c
+)
+
+target_link_libraries(transpose_test PRIVATE shared_settings)
 
 ##################################################
 # Benchmarking and visualisation with Python

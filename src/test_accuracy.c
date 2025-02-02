@@ -1,5 +1,5 @@
 /*
-  Compares accuracy of test dgemm implementation to reference BLIS implementation
+  Compares accuracy of test dgemm implementation to BLAS implementation
   Tests with inputs as n x n square matrices starting from n = init_n up to n = final_n in increments of inc.
   Records biggest difference between implementations, measured as the biggest difference between elements in
   the final result, repeats (reps) times, and saves biggest difference.
@@ -8,30 +8,21 @@
                 n          diff
   where diff is a double representing biggest difference over all trials for size n.
  */
-#include "RandomiseM.h"
-#include "testgemm.h"
-#include "mdiff.h"
-#include <stdio.h>
-#include <string.h>
-#include <immintrin.h>
 
-// Prototype of BLIS dgemm
-void dgemm_(char*, char*, int*, int*, int*,
-	    double*, double*, int*,
-	    double*, int*,
-	    double*, double*, int*);
+#include "test_accuracy.h"
 
-void test_accuracy(int init_n, int final_n, int inc, int reps){
+void test_accuracy(char* transA, char* transB,
+		   int init_n, int final_n, int inc, int reps){
   unsigned long sq;
   double worst;
   for (int n = init_n; n <= final_n; n += inc){
     sq = n * n;
-    double* A = (double*) _mm_malloc(sq * sizeof(double), 64);
-    double* B = (double*) _mm_malloc(sq * sizeof(double), 64);
-    double* C = (double*) _mm_malloc(sq * sizeof(double), 64);
-    double* C_ref = (double*) _mm_malloc(sq * sizeof(double), 64);
+    double* A = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN);
+    double* B = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN);
+    double* C = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN);
+    double* C_ref = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN);
     
-    if (!A || !B || !C){
+    if (!A || !B || !C || !C_ref){
       fprintf(stderr, "Failed to allocate memory to matrices.\n");
       exit(EXIT_FAILURE);
     }
@@ -44,8 +35,10 @@ void test_accuracy(int init_n, int final_n, int inc, int reps){
     worst = 0.;
     double one = 1.0;
     for (int t = 0; t < reps; ++t){
-      testgemm(n, n, n, A, n, B, n, C, n);
-      dgemm_("No transpose", "No transpose", &n, &n, &n,
+      testgemm(transA, transB,
+	       n, n, n, A, n, B, n, C, n);
+      dgemm_(transA, transB,
+	     &n, &n, &n,
 	     &one, A, &n,
 	     B, &n,
 	     &one, C_ref, &n);
@@ -65,7 +58,6 @@ void test_accuracy(int init_n, int final_n, int inc, int reps){
 }
 
 int main(void){
-  test_accuracy(48, 960, 48, 3);
-
+  test_accuracy("N", "N", 48, 960, 48, 3);
   return 0;
 }

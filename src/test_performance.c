@@ -8,21 +8,10 @@
   where best is a double representing peak performance over all trials for size n, and best_ref is the same
   for the BLIS implementation.
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <immintrin.h>
 #include "test_performance.h"
-#include "testgemm.h"
 
-/* Prototype of BLIS reference dgemm */
-void dgemm_(char*, char*,
-	    int* , int*, int*,
-	    double*, double*, int*,
-	    double*, int*,
-	    double*, double*, int*);
-
-void test_perf(int init_n, int final_n, int inc, int reps){
+void test_perf(char* transA, char* transB,
+	       int init_n, int final_n, int inc, int reps){
   unsigned long sq; // Save square of n for convenience
   double gflops; // Gigaflop count for n x n matrix multiplication
   double best, best_ref; // Record best performance for each size
@@ -52,7 +41,8 @@ void test_perf(int init_n, int final_n, int inc, int reps){
     best = 0.;
     for (int t = 0; t < reps; ++t){
       clock_t start = clock();
-      testgemm(n, n, n, A, n, B, n, C, n);
+      testgemm(transA, transB,
+	       n, n, n, A, n, B, n, C, n);
       clock_t end = clock();
 
       double exec_time = (double)(end - start)/CLOCKS_PER_SEC;
@@ -64,7 +54,7 @@ void test_perf(int init_n, int final_n, int inc, int reps){
     double one = 1.0;
     for (int t = 0; t < reps; ++t){
       clock_t start_ref = clock();
-      dgemm_("No transpose", "No transpose", &n, &n, &n,
+      dgemm_(transA, transB, &n, &n, &n,
 	     &one, A, &n,
 	     B, &n,
 	     &one, C_ref, &n);
