@@ -57,7 +57,17 @@ void test_accuracy(char* transA, char* transB,
   }
 }
 
-int main(void){
-  test_accuracy("N", "N", 48, 960, 48, 3);
+int main(int argc, char** argv){
+  int numargs = 7;
+  argcount(numargs - 1, argc - 1);
+  
+  char* transA = argv[1];
+  char* transB = argv[2];
+  int init_n = atoi(argv[3]), final_n = atoi(argv[4]), inc = atoi(argv[5]), reps = atoi(argv[6]);
+
+  init_n = (init_n/inc) * inc;
+  final_n = (final_n/inc) * inc;
+  
+  test_accuracy(transA, transB, init_n, final_n, inc, reps);
   return 0;
 }

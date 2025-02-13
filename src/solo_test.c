@@ -62,6 +62,6 @@ int main(int argc, char** argv){
   init_n = (init_n/inc) * inc;
   final_n = (final_n/inc) * inc;
 
-  solo_test(transA, transB, init_n, final_n, inc, reps);
+  solo_test(transA, transB, init_n, final_n, inc, reps);  
   return 0;
 }

@@ -47,6 +47,8 @@ set(SHARED_SOURCES
   src/testgemm.c
   src/detgmm.c
   src/gentools/packing.c
+  src/gentools/mk_part_buffer_C.c
+  src/gentools/mk_avx_buffer_C.c
   src/gentools/RandomiseM.c
   src/gentools/nextbit.c
   src/transpose/transpose.c
@@ -99,9 +101,9 @@ if(NC STREQUAL "OFF")
   set(NC 512)
 endif()
 
-set(KC 512 CACHE STRING "Cache depth")
+set(KC 72 CACHE STRING "Cache depth")
 if(KC STREQUAL "OFF")
-  set(KC 512)
+  set(KC 72)
 endif()
 
 # Add compile definitions with defaults or user overrides
@@ -127,23 +129,27 @@ target_link_libraries(driver PRIVATE shared_settings)
 
 # Optional accuracy test: defaults to ON
 option(CHECK_ACCURACY "Build accuracy tests" ON)
+option(RUN_ACCURACY_TEST "Run accuracy test automatically after build" ON)
 
 if(CHECK_ACCURACY)
   add_executable(test_accuracy
     src/test_accuracy.c
     src/gentools/mdiff.c
+    src/gentools/argcount.c
     ${SHARED_SOURCES}
   )
 
   target_link_libraries(test_accuracy PRIVATE shared_settings)
 
-  add_custom_command(
-    TARGET test_accuracy
-    POST_BUILD
-    COMMAND $<TARGET_FILE:test_accuracy>
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Testing accuracy against BLIS reference implementation..."
-  )
+  if(RUN_ACCURACY_TEST)
+    add_custom_command(
+      TARGET test_accuracy
+      POST_BUILD
+      COMMAND $<TARGET_FILE:test_accuracy> N N 48 960 48 3
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMENT "Testing accuracy against BLIS reference implementation..."
+    )
+  endif()
 endif()
 
 ##################################################

@@ -2,10 +2,11 @@
 #define PACKING_H
 
 #include "minmax.h"
+#include<string.h>
 
-void packMicroA(int, int, double*, int, double*);
-void packMicroB(int, int, double*, int, double*);
-void packA(int, int, double*, int, double*);
-void packB(int, int, double*, int, double*);
+void packMicroA(char*, int, int, double*, int, double*);
+void packMicroB(char*, int, int, double*, int, double*);
+void packA(char*, int, int, double*, int, double*);
+void packB(char*, int, int, double*, int, double*);
 
 #endif
