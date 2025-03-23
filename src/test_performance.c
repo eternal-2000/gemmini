@@ -1,17 +1,17 @@
-/*
-  Compares performance of test dgemm implemention with reference BLIS implementation.
-  Tests with inputs as n x n square matrices starting from n = init_n up to n = final_n in increments of inc.
-  Records performance in Gflops/sec, repeats (reps) times, and saves peak performance.
-
-  Outputs to stdout rows of the form
-                n          best          best_ref
-  where best is a double representing peak performance over all trials for size n, and best_ref is the same
-  for the BLIS implementation.
- */
 #include "test_performance.h"
 
 void test_perf(char* transA, char* transB,
 	       int init_n, int final_n, int inc, int reps){
+  /**
+     Compares performance of test dgemm implemention with reference BLIS implementation.
+     Tests with inputs as n x n square matrices starting from n = init_n up to n = final_n in increments of inc.
+     Records performance in Gflops/sec, repeats (reps) times, and saves peak performance.
+
+     Outputs to stdout rows of the form
+     n          best          best_ref
+     where best is a double representing peak performance over all trials for size n, and best_ref is the same
+     for the BLIS implementation.
+  **/
   unsigned long sq; // Save square of n for convenience
   double gflops; // Gigaflop count for n x n matrix multiplication
   double best, best_ref; // Record best performance for each size
@@ -20,13 +20,13 @@ void test_perf(char* transA, char* transB,
   
   for (int n = init_n; n <= final_n; n += inc){
     sq = n * n;
-    gflops = 2 * sq * n * 1e-09; // Gigaflop count for n x n matrix multiplication 
+    gflops = 2 * sq * n * 1e-09; // Gigaflop count for standard n x n matrix multiplication 
   
     /* Initialise matrices with random entries */
-    double* A = (double*) _mm_malloc(sq * sizeof(double), 64); 
-    double* B = (double*) _mm_malloc(sq * sizeof(double), 64);
-    double* C = (double*) _mm_malloc(sq * sizeof(double), 64);
-    double* C_ref = (double*) _mm_malloc(sq * sizeof(double), 64);
+    double* A = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN); 
+    double* B = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN);
+    double* C = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN);
+    double* C_ref = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN);
     
     if (!A || !B || !C){
       fprintf(stderr, "Failed to allocate memory to matrices.\n");
@@ -40,12 +40,12 @@ void test_perf(char* transA, char* transB,
     
     best = 0.;
     for (int t = 0; t < reps; ++t){
-      clock_t start = clock();
+      double start = omp_get_wtime();
       testgemm(transA, transB,
 	       n, n, n, A, n, B, n, C, n);
-      clock_t end = clock();
+      double end = omp_get_wtime();
 
-      double exec_time = (double)(end - start)/CLOCKS_PER_SEC;
+      double exec_time = end - start;
       double perf = gflops/exec_time;
       if (perf > best) best = perf;
     }
@@ -53,14 +53,14 @@ void test_perf(char* transA, char* transB,
     best_ref = 0.;
     double one = 1.0;
     for (int t = 0; t < reps; ++t){
-      clock_t start_ref = clock();
+      double start_ref = omp_get_wtime();
       dgemm_(transA, transB, &n, &n, &n,
 	     &one, A, &n,
 	     B, &n,
 	     &one, C_ref, &n);
-      clock_t end_ref = clock();
+      double end_ref = omp_get_wtime();
 
-      double ref_time = (double) (end_ref - start_ref)/CLOCKS_PER_SEC;
+      double ref_time = end_ref - start_ref;
       double perf_ref = gflops/ref_time;
       if (perf_ref > best_ref) best_ref = perf_ref;
     }
