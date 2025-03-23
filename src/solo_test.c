@@ -30,11 +30,11 @@ void solo_test(char* transA, char* transB,
 
     best = 0.;
     for (int t = 0; t < reps; ++t){
-      clock_t start = clock();
+      double start = omp_get_wtime();
       testgemm(transA, transB, n, n, n, A, n, B, n, C, n);
-      clock_t end = clock();
+      double end = omp_get_wtime();
 
-      double exec_time = (double) (end - start)/CLOCKS_PER_SEC;
+      double exec_time = end - start;
       double perf = gflops / exec_time;
       average += perf;
       if (perf > best) best = perf;
