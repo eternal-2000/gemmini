@@ -16,7 +16,7 @@ full-sized buffer instead.
 Packing of A and B microtiles into contiguous memory is handled in the third and fourth loops around the microkernel,
 and transposition is also handled here to minimise any cost.
 
-Syntax to call test functions is ./<test-function> "X" "X" initial-size final-size increment repetitions, where "X"
+Syntax to call test functions is ./test-function "X" "X" initial-size final-size increment repetitions, where "X"
 should be "T" (transpose) or "N" (no transpose), initial-size and final-size are the dimensions of the first and last
 square matrices to test, the increment is the number of dimensions to add each step, and repetitions is the number of 
 times to repeat the multiplication to get performance data.
