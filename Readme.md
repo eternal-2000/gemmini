@@ -1,5 +1,6 @@
 ## README ##
-==================================================
+===================================================
+
 This is an implementation of double-precision general matrix multiplication (dgemm), with an AVX2 microkernel,
 meant for personal experimentation. 
 
