@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(RGeMM C) 
+project(GeMMini C) 
 
 # Check in /include for headers
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -71,7 +71,7 @@ set(TRANSPOSE_SOURCES
 # Files needed for sketching
 set(SKETCH_SOURCES
   src/sketching/sketch.c
-  src/sketching/select.c
+  src/sketching/col_select.c
   src/gentools/print_matrix.c
 )
 
@@ -91,19 +91,19 @@ if(NR STREQUAL "OFF")
 endif()
 
 #set(KR 4 CACHE STRING "Register depth")
-set(MC 512 CACHE STRING "Cache row size")
+set(MC 128 CACHE STRING "Cache row size")
 if(MC STREQUAL "OFF")
-  set(MC 512)
+  set(MC 128)
 endif()
 
-set(NC 512 CACHE STRING "Cache column size")
+set(NC 1028 CACHE STRING "Cache column size")
 if(NC STREQUAL "OFF")
-  set(NC 512)
+  set(NC 1028)
 endif()
 
-set(KC 72 CACHE STRING "Cache depth")
+set(KC 256 CACHE STRING "Cache depth")
 if(KC STREQUAL "OFF")
-  set(KC 72)
+  set(KC 256)
 endif()
 
 # Add compile definitions with defaults or user overrides
@@ -153,7 +153,7 @@ if(CHECK_ACCURACY)
 endif()
 
 ##################################################
-# Solo testing - esp. used for autotuning
+# Solo testing - esp. used for autotuning (TBA)
 ##################################################
 
 add_executable(solo_test
@@ -164,15 +164,16 @@ add_executable(solo_test
 
 target_link_libraries(solo_test PRIVATE shared_settings)
 
-##################################################
-# Random sketching
-##################################################
+# ##################################################
+# # Random sketching
+# ##################################################
 
-#add_executable(sketch_test
-#  src/sketching/sketch_test.c
-#  src/RandomiseM.c
-#  ${SKETCH_SOURCES}
-#)
+# add_executable(sketch_test
+#   src/sketching/sketch_test.c
+#   src/gentools/RandomiseM.c
+#   src/gentools/argcount.c
+#   ${SKETCH_SOURCES}
+# )
 
 ##################################################
 # Transposition
