@@ -1,4 +1,4 @@
-/*
+/**
   Compares accuracy of test dgemm implementation to BLAS implementation
   Tests with inputs as n x n square matrices starting from n = init_n up to n = final_n in increments of inc.
   Records biggest difference between implementations, measured as the biggest difference between elements in
@@ -33,15 +33,16 @@ void test_accuracy(char* transA, char* transB,
     memcpy(C_ref, C, sq * sizeof(double));
     
     worst = 0.;
-    double one = 1.0;
+    double alpha = 1.0;
+    double beta = 1.0;
     for (int t = 0; t < reps; ++t){
       testgemm(transA, transB,
-	       n, n, n, A, n, B, n, C, n);
+	       n, n, n, alpha, A, n, B, n, C, n);
       dgemm_(transA, transB,
 	     &n, &n, &n,
-	     &one, A, &n,
+	     &alpha, A, &n,
 	     B, &n,
-	     &one, C_ref, &n);
+	     &beta, C_ref, &n);
       
       double err = mdiff(n, n, C, n, C_ref, n);
       if (err > worst) worst = err;

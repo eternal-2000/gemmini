@@ -38,11 +38,13 @@ void test_perf(char* transA, char* transB,
     randomiseM(n, n, C, n);
     memcpy(C_ref, C, sq * sizeof(double));
     
+    double alpha = 1.0;
+    double beta = 1.0;
     best = 0.;
     for (int t = 0; t < reps; ++t){
       double start = omp_get_wtime();
       testgemm(transA, transB,
-	       n, n, n, A, n, B, n, C, n);
+	       n, n, n, alpha, A, n, B, n, C, n);
       double end = omp_get_wtime();
 
       double exec_time = end - start;
@@ -51,13 +53,12 @@ void test_perf(char* transA, char* transB,
     }
 
     best_ref = 0.;
-    double one = 1.0;
     for (int t = 0; t < reps; ++t){
       double start_ref = omp_get_wtime();
       dgemm_(transA, transB, &n, &n, &n,
-	     &one, A, &n,
+	     &alpha, A, &n,
 	     B, &n,
-	     &one, C_ref, &n);
+	     &beta, C_ref, &n);
       double end_ref = omp_get_wtime();
 
       double ref_time = end_ref - start_ref;

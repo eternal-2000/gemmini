@@ -1,12 +1,11 @@
 #ifndef TEST_PERFORMANCE_H
 #define TEST_PERFORMANCE_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <immintrin.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<immintrin.h>
 #include<time.h>
-#include "test_performance.h"
 #include "testgemm.h"
 #include "gentools/RandomiseM.h"
 

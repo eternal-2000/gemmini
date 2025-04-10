@@ -2,6 +2,7 @@
 #define TEST_ACCURACY_H
 
 #include "testgemm.h"
+#include "gentools/argcount.h"
 #include "gentools/mdiff.h"
 #include "gentools/RandomiseM.h"
 #include <stdio.h>

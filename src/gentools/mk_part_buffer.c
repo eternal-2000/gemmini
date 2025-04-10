@@ -1,9 +1,9 @@
 #include "gentools/buffers.h"
 
-void mk_part_buffer_C(int m, int n, int p, double* A, double* B, double* C, int ldC){
+void mk_part_buffer(int m, int n, int p, double* A, double* B, double* C, int ldC){
   /*
     Handles incomplete microtile of C by passing a full MR x NR buffer of zeros to the
-    microkernel, then incrementing the incomplete microtile with the results.
+    microkernel, then accumulating the results into the incomplete microtile.
    */
   double* C_buff = (double*) _mm_malloc(MR * NR * sizeof(double), CACHE_ALIGN);
   memset(C_buff, 0, MR * NR * sizeof(double));

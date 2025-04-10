@@ -1,7 +1,12 @@
 #include "gentools/packing.h"
 /**
-  Implements packing micropanels of matrices A and B, and stores them in (resp.) A_pack, B_pack
-  If a matrix cannot be tiled with MR x NR micropanels then pads the micropanel with zeros.
+  Implements packing micropanels of matrices A and B, and stores them
+  in (resp.) A_pack, B_pack. If a matrix cannot be tiled with MR x NR
+  micropanels, pads the micropanel with zeros to full MR x NR size.
+
+  Note: there is an asymmetry between the packing of A and B. During
+  the packing of B we also scale it by the scalar α in the operation C
+  += αAB.
  */
 
 void packMicroA(char* transA, int m, int p, double* A, int ldA, double* A_pack){
@@ -34,11 +39,11 @@ void packA(char* transA, int m, int p, double* A, int ldA, double* A_pack){
   }
 }
 
-void packMicroB(char* transB, int p, int n, double* B, int ldB, double* B_pack){
+void packMicroB(char* transB, int p, int n, double alpha, double* B, int ldB, double* B_pack){
   if (!strcmp(transB, "N")){
     for (int k = 0; k < p; ++k){
       for (int j = 0; j < n; ++j){
-	*B_pack++ = B[k + j * ldB];
+	*B_pack++ = alpha * B[k + j * ldB];
       }
       for (int j = n; j < NR; ++j){ 
 	*B_pack++ = 0.0;
@@ -47,7 +52,7 @@ void packMicroB(char* transB, int p, int n, double* B, int ldB, double* B_pack){
   } else{
     for (int k = 0; k < p; ++k){
       for (int j = 0; j < n; ++j){
-	*B_pack++ = B[j + k * ldB];
+	*B_pack++ = alpha * B[j + k * ldB];
       }
       for (int j = n; j < NR; ++j){
 	*B_pack++ = 0.0;
@@ -56,10 +61,10 @@ void packMicroB(char* transB, int p, int n, double* B, int ldB, double* B_pack){
   }
 }
 
-void packB(char* transB, int p, int n, double* B, int ldB, double* B_pack){
+void packB(char* transB, int p, int n, double alpha, double* B, int ldB, double* B_pack){
   #pragma omp parallel for
   for (int j = 0; j < n; j += NR){
     int jb = MIN(NR, n - j);
-    packMicroB(transB, p, jb, &B[j * ldB], ldB, &B_pack[j * p]);
+    packMicroB(transB, p, jb, alpha, &B[j * ldB], ldB, &B_pack[j * p]);
   }
 }

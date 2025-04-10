@@ -28,10 +28,11 @@ void solo_test(char* transA, char* transB,
     randomiseM(n, n, B, n);
     randomiseM(n, n, C, n);
 
+    double s = 1.0;    
     best = 0.;
     for (int t = 0; t < reps; ++t){
       double start = omp_get_wtime();
-      testgemm(transA, transB, n, n, n, A, n, B, n, C, n);
+      testgemm(transA, transB, n, n, n, s, A, n, B, n, C, n);
       double end = omp_get_wtime();
 
       double exec_time = end - start;

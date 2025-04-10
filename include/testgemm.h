@@ -2,6 +2,6 @@
 #define TESTGEMM_H
 
 #include "detgmm.h"
-void testgemm(char*, char*, int, int, int, double*, int, double*, int, double*, int);
+void testgemm(char*, char*, int, int, int, double, double*, int, double*, int, double*, int);
 
 #endif

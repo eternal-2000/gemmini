@@ -47,8 +47,8 @@ set(SHARED_SOURCES
   src/testgemm.c
   src/detgmm.c
   src/gentools/packing.c
-  src/gentools/mk_part_buffer_C.c
-  src/gentools/mk_avx_buffer_C.c
+  src/gentools/mk_part_buffer.c
+  src/gentools/mk_avx_buffer.c
   src/gentools/RandomiseM.c
   src/gentools/nextbit.c
   src/transpose/transpose.c
