@@ -15,6 +15,5 @@ void detgmm(char*, char*, int, int, int, double, double*, int, double*, int, dou
 void proc_B(char*, char*, int, int, int, double, double*, int, double*, int, double*, int);
 void proc_A(char*, int, int, int, double*, int, double*, double*, int);
 void macrokernel(int, int, int, double*, double*, double*, int);
-void mkger(int, int, int, double*, double*, double*, int);
 
 #endif

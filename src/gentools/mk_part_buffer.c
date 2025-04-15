@@ -1,7 +1,7 @@
 #include "gentools/buffers.h"
 
 void mk_part_buffer(int m, int n, int p, double* A, double* B, double* C, int ldC){
-  /*
+  /**
     Handles incomplete microtile of C by passing a full MR x NR buffer of zeros to the
     microkernel, then accumulating the results into the incomplete microtile.
    */
