@@ -11,6 +11,33 @@ link_directories(${BLIS_PATH}/lib)
 
 find_package(OpenMP REQUIRED)
 
+# Allow assembly output for detgmm
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/detgmm_raw_asm.s
+  COMMAND ${CMAKE_C_COMPILER}
+  -I${CMAKE_CURRENT_SOURCE_DIR}/include
+  -Wall -O3 -march=native -funroll-loops -ffast-math
+  -fassociative-math -mfma -mavx2 -fopenmp -D_POSIX_C_SOURCE=200809L
+  -S -fverbose-asm
+  -DMR=${MR} -DNR=${NR} -DMC=${MC} -DNC=${NC} -DKC=${KC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/detgmm.c -o ${CMAKE_CURRENT_BINARY_DIR}/detgmm_raw_asm.s
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/detgmm.c
+  COMMENT "Generating raw assembly code for detgmm.c"
+)
+
+# Format assembly using tests/format_asm.sh
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/detgmm.s
+  COMMAND ${CMAKE_SOURCE_DIR}/tests/format_asm.sh
+    ${CMAKE_CURRENT_BINARY_DIR}/detgmm_raw_asm.s
+    ${CMAKE_CURRENT_BINARY_DIR}/detgmm.s
+  DEPENDS 
+    ${CMAKE_CURRENT_BINARY_DIR}/detgmm_raw_asm.s
+    ${CMAKE_SOURCE_DIR}/tests/format_asm.sh
+  COMMENT "Formatting assembly output"
+)
+
+add_custom_target(generate_asm DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/detgmm.s)
+
 ##################################################
 # Shared settings
 ##################################################
@@ -81,6 +108,7 @@ set(TRANSPOSE_SOURCES
 ##################################################
 
 # Default values for parameters, chosen for Ryzen 5600X
+# The 8 x 6 microkernel uses 15 out of its 16 vector registers
 set(MR 8 CACHE STRING "Register row size")
 if(MR STREQUAL "OFF")
   set(MR 8)
@@ -91,7 +119,6 @@ if(NR STREQUAL "OFF")
   set(NR 6)
 endif()
 
-#set(KR 4 CACHE STRING "Register depth")
 set(MC 128 CACHE STRING "Cache row size")
 if(MC STREQUAL "OFF")
   set(MC 128)
