@@ -1,7 +1,6 @@
 #ifndef BUFFERS_H
 #define BUFFERS_H
 
-#include<immintrin.h>
 #include<string.h>
 #include "kernels/kernel.h"
 #include "gentools/minmax.h"

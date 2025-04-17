@@ -47,7 +47,7 @@ void proc_A(char* transA,
   _mm_free(A_pack);
 }
 
-void macrokernel(int m, int n, int p, double* A_pack, double* B_pack, double* C, int ldC){ // To be moved to ASM
+void macrokernel(int m, int n, int p, double* A_pack, double* B_pack, double* C, int ldC){ // To be ported to ASM
   for (int j = 0; j < n; j += NR){
     int jb = MIN(NR, n - j);
     if (ldC % VEC_WIDTH != 0){ // Align C to vector register width if needed, and update

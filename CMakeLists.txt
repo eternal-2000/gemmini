@@ -54,11 +54,12 @@ set(SHARED_SOURCES
   src/transpose/transpose.c
   src/kernels/kernel4x4.c
   src/kernels/kernel8x4.c
+  src/kernels/kernel8x6.c
   src/kernels/kernel8x8.c
   src/kernels/kernel12x4.c
   src/kernels/kernel12x8.c
   src/kernels/kernel4x12.c
-  src/kernels/kernel16x4.c  
+  src/kernels/kernel16x4.c
 )
 
 # Files needed for transposition
@@ -68,12 +69,12 @@ set(TRANSPOSE_SOURCES
   src/gentools/print_matrix.c
 )
 
-# Files needed for sketching
-set(SKETCH_SOURCES
-  src/sketching/sketch.c
-  src/sketching/col_select.c
-  src/gentools/print_matrix.c
-)
+# # Files needed for sketching
+# set(SKETCH_SOURCES
+#   src/sketching/sketch.c
+#   src/sketching/col_select.c
+#   src/gentools/print_matrix.c
+# )
 
 ##################################################
 # Compile-time constants
@@ -85,9 +86,9 @@ if(MR STREQUAL "OFF")
   set(MR 8)
 endif()
 
-set(NR 4 CACHE STRING "Register column size")
+set(NR 6 CACHE STRING "Register column size")
 if(NR STREQUAL "OFF")
-  set(NR 4)
+  set(NR 6)
 endif()
 
 #set(KR 4 CACHE STRING "Register depth")
@@ -101,7 +102,7 @@ if(NC STREQUAL "OFF")
   set(NC 1028)
 endif()
 
-set(KC 256 CACHE STRING "Cache depth")
+set(KC 256 CACHE STRING "Cache inner dimension")
 if(KC STREQUAL "OFF")
   set(KC 256)
 endif()
@@ -153,7 +154,7 @@ if(CHECK_ACCURACY)
 endif()
 
 ##################################################
-# Solo testing - esp. used for autotuning (TBA)
+# Solo testing
 ##################################################
 
 add_executable(solo_test

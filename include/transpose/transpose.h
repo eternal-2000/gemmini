@@ -6,6 +6,6 @@
 #include "transpose16x16.h"
 #include "nextbit.h"
 
-void transpose(int, int, const double* restrict, int, double* restrict, int);
+void transpose(int, int, double* restrict, int, double* restrict, int);
 
 #endif

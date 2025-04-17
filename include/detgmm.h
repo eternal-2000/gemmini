@@ -5,7 +5,6 @@
 #include "gentools/packing.h"
 #include "gentools/minmax.h"
 #include "gentools/buffers.h"
-#include "transpose/transpose.h"
 #include "memparams.h"
 #include<stdio.h>
 #include<string.h>
