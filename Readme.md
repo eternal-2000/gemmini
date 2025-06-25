@@ -150,9 +150,9 @@ performance as a function of size.
 
 Some good choices of cache parameters can be suggested by running the
 Python script `get_cache_params.py`. This suggests cache parameters
-based on (Low, et al.)[https://dl.acm.org/doi/10.1145/2925987], using
-some information about hardware data from (Agner Fog's
-tables)[https://www.agner.org/optimize/instruction_tables.pdf]. This
+based on [Low, et al.](https://dl.acm.org/doi/10.1145/2925987), using
+some information about hardware data from [Agner Fog's
+tables](https://www.agner.org/optimize/instruction_tables.pdf). This
 script does not contain an exhaustive list of CPUs which are supported
 in principle. If you find your CPU does support AVX2, but is not
 supported yet, then it may be added in the future, and probably is
