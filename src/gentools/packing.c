@@ -4,9 +4,9 @@
   in (resp.) A_pack, B_pack. If a matrix cannot be tiled with MR x NR
   micropanels, pads the micropanel with zeros to full MR x NR size.
 
-  Note: there is an asymmetry between the packing of A and B. During
-  the packing of B we also scale it by the scalar α in the operation C
-  += αAB.
+  Note: there is an asymmetry between the packing of A and B because
+  during the packing of B we also scale it by the scalar α in the
+  operation C += αAB.
  */
 
 void packMicroA(char* transA, int m, int p, double* A, int ldA, double* A_pack){

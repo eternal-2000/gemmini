@@ -1,5 +1,5 @@
-#include "detgmm.h"
-void detgmm(char* transA, char* transB,
+#include "dgemm.h"
+void dgemm(char* transA, char* transB,
 	    int m, int n, int p, double alpha, double* A, int ldA, double* B, int ldB, double* C, int ldC){
   if ((strcmp(transA, "T") && strcmp(transA, "N")) || (strcmp(transB, "T") && (strcmp(transB, "N")))){
     fprintf(stderr, "Invalid transpose arguments: %s, %s\n", transA, transB);
@@ -15,7 +15,7 @@ void detgmm(char* transA, char* transB,
   int rem_per_thread = (1 + (rem/thread_count) / NR) * NR;
 
 #pragma omp parallel for
-  for (int j = 0; j < full_cols; j += mt_C_block_size){ // Load-balanced columns
+  for (int j = 0; j < full_cols; j += mt_C_block_size){
     proc_B(transA, transB, m, mt_C_block_size, p, alpha, A, ldA, &B[j * ldB], ldB, &C[j * ldC], ldC);
   }
 
@@ -46,7 +46,7 @@ void proc_A(char* transA, int m, int n, int p, double* A, int ldA, double* B_pac
   _mm_free(A_pack);
 }
 
-void macrokernel(int m, int n, int p, double* A_pack, double* B_pack, double* C, int ldC){ // Target ASM here
+void macrokernel(int m, int n, int p, double* A_pack, double* B_pack, double* C, int ldC){ // Target ASM from here
   for (int j = 0; j < n; j += NR){
     int jb = MIN(NR, n - j);
     if (ldC % VEC_WIDTH != 0){ // Align C to vector register width if needed, and update
@@ -57,7 +57,7 @@ void macrokernel(int m, int n, int p, double* A_pack, double* B_pack, double* C,
 	if (ib < MR || jb < NR){ // If block is not full, calculate with a temp buffer
 	  mk_part_buffer(ib, jb, p, &A_pack[i * p], &B_pack[j * p], &C[i + j * ldC], ldC);
 	} else{
-	  DGEMM_MICROKERNEL(MR, NR)(p, &A_pack[i * p], &B_pack[j * p], &C[i + j * ldC], ldC);
+	  dgemm_kernel(p, &A_pack[i * p], &B_pack[j * p], &C[i + j * ldC], ldC);
 	}
       }
     }

@@ -1,7 +1,8 @@
-#include "detgmm.h"
 #include "testgemm.h"
 
 void testgemm(char* transA, char* transB,
 	      int m, int n, int p, double alpha, double* A, int ldA, double* B, int ldB, double* C, int ldC){
-  detgmm(transA, transB, m, n, p, alpha, A, ldA, B, ldB, C, ldC);
+  /** A wrapper for a particular dgemm implementation. Trivial for now but will change in future. */
+  
+  dgemm(transA, transB, m, n, p, alpha, A, ldA, B, ldB, C, ldC);
 }

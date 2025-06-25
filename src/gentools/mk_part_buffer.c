@@ -7,7 +7,7 @@ void mk_part_buffer(int m, int n, int p, double* A, double* B, double* C, int ld
    */
   double* C_buff = (double*) _mm_malloc(MR * NR * sizeof(double), CACHE_ALIGN);
   memset(C_buff, 0, MR * NR * sizeof(double));
-  MICROKERNEL(MR, NR)(p, A, B, C_buff, MR);
+  dgemm_kernel(p, A, B, C_buff, MR);
 
   for (int j = 0; j < n; ++j){
     for (int i = 0; i < m; ++i){

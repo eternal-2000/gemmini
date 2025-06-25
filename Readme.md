@@ -1,60 +1,177 @@
 ## README ##
 
-GeMMini is an implementation of double-precision general matrix
-multiplication (dgemm), with a microkernel written in AVX2 intrinsics,
-meant for personal experimentation.
+Gemmini is an early stage, experimental approach to the implementation
+of the level-3 BLAS.  Gemmini aims to instantiate a version of the
+level-3 BLAS operations, specialised to a system's specific
+architecture. It does this in a similar way to BLIS rather than ATLAS
+(i.e. no computationally-intensive autotuning).
 
-This algorithm performs the update C += αAB, where C is m x n, A is m
-x p, and B is p x n, α is a scalar, and entries are doubles.  This
-also correctly implements versions where A, B, or both are transposed.
+Gemmini is a hobby project, made purely out of enjoyment. This readme
+is also intended for people who may have some curiosity about the
+project, rather than using it for serious HPC work, at least at the
+current very early stage.
 
-# General description #
+In this current early state, Gemmini only supports the microkernels of
+GEMM operations (hence the name), and only targets CPUs, using C. This
+requires a CPU which supports AVX2 instructions. AVX-512 is supported,
+but may have bugs which I haven't spotted yet, due to focusing on
+AVX2.
 
-This follows the BLIS view of considering the GeMM operation as five
-loops around the microkernel, which is fixed at compile time, and
-updates microtiles of C by a rank-1 update with micropanels of A and
-B. In the event that the dimensions of the microtile are not big
-enough to make it fit exactly into the microkernel, we use a temporary
-full-sized buffer instead.
+Gemmini uses Lisp to automate code generation, and uses ASDF to
+compile the `.lisp` files. SBCL or some alternative Common Lisp
+implementation will be needed for this.
 
-Packing of A and B microtiles into contiguous memory is handled in the
-third and fourth loops around the microkernel, and transposition is
-also handled here to minimise any cost.
+# General description and use #
 
-Syntax to call test functions is ./test-function "X" "X" initial-size
-final-size increment repetitions, where "X" should be "T" (transpose)
-or "N" (no transpose), initial-size and final-size are the dimensions
-of the first and last square matrices to test, the increment is the
-number of dimensions to add each step, and repetitions is the number
-of times to repeat the multiplication to get performance data.
+Gemmini takes a slightly different approach to implementing the BLAS
+operations. First, an abstract intermediate representation of a given
+operation is constructed, and then the intermediate representation is
+mapped to a target language and architecture (e.g. an implementation
+of GEMM in C for a CPU with 256-bit YMM registers). The abstraction of
+the operation itself away from any particular representation in a
+given language is intended to allow easy extension to different
+architectures, or different languages, and handle different float
+precisions easily, as well as making extension to new operations
+easier in principle.
+
+Currently, the user can invoke the code generation process by calling
+a simple Bash script in the `generators` directory: `build.sh`. This
+should be given the name of a BLAS operation, the dimensions of the
+microkernel, the precision of the operation, in bits, and the size of
+the vector registers of the CPU, also in bits, e.g. (in the
+`/generators` directory)
+
+```bash
+sh ./build.sh gemm 4 4 64 256
+```
+
+will generate a 4 x 4 `dgemm` microkernel, targeting 256-bit vector
+registers. This will use AVX2 intrinsics. AVX-512 support is
+tentatively possible by specifying a 512-bit vector register, assuming
+the CPU actually supports AVX-512, but bugs may exist. Changing the
+precision to 32 in the above example, instead of 64, will generate an
+`sgemm` microkernel instead.
+
+If you want to change microkernel dimensions, just run the build
+script again, and the microkernel will be overwritten with a new one.
+
+Alternatively, 
+
+After a microkernel has been generated, the rest of the code can be
+compiled with Meson by 
+
+```shell 
+meson setup builddir/
+```
+
+and then
+
+```shell
+ninja -C builddir/
+```
+
+It is possible to change the parameters of the loops around the
+microkernel by passing them as flags, but please remember to generate
+a microkernel which matches the parameters `MR` and `NR`. At this
+stage, the code generator does not automatically overwrite the
+parameters in `meson_options`.
+
+It may also be necessary to adjust the number of cores of the CPU
+being used by OpenMP. The number of cores will be reported back to you
+by the script `generators/get_build_params`. See the section on cache
+parameters for more.
+
+So far, only the `gemm` microkernels are supported, with plans for
+expansion to both other traditional level-3 BLAS operations, and
+alternative variants of the standard BLAS operations.
+
+An implementation of the loops around the microkernel is also provided
+for `dgemm`, so the full `dgemm` operation is supported presently on
+the CPU, minus some optimisations. An `sgemm` implementation will be
+added in the future. Features will generally be added by focusing on
+the double-precision implementation first, and single-precision
+versions will be added later, with much lower priority.
+
+Currently, Gemmini assumes that the row micropanel will be used for
+broadcasting, and not the column micropanel. This means that the
+number of rows in the microkernel is required to be a multiple of 4.
 
 # Performance #
 
-Currently performance is measured by taking the peak performance in a
-given number of runs (3 by default). Performance can also be measured
-against the BLIS reference implementation. This assumes that BLIS is
-installed and located in ~/blis. Performance can be plotted by calling
-the Python script in the test directory.
+Testing so far shows similar performance to BLIS when good parameters
+are chosen. So far, cache parameters are not automatically fully
+optimised to the architecture (you can read more about this in the
+next section). This is because the majority of the high performance
+comes from a good choice of microkernel dimensions and cache
+parameters, even though so far certain optimisations such as inlined
+assembly and prefetching remain unimplemented. Performance will
+usually hit around 90% of BLIS performance, or greater. It is also
+possible to play with parameters to get much closer to parity with
+BLIS than this.
 
-Currently, only the fifth loop around the microkernel is
-parallelised. This is because I'm still playing around with a proper
-implementation of parallelised inner loops as well. This still enables
-around 90-99 % of the performance of BLIS for smaller (less than ~2000
-x 2000) matrix sizes on my own CPU at present and should be improved
-further in a future update.
+Currently, you can test the performance of a particular `dgemm`
+implementation in two ways. You can either test it on its own and
+record its performance in gigaflops per second (GFLOPS) with
+`solo_test`, or you can compare it to a reference (BLIS)
+implementation.
+
+To benchmark with `solo_test`, the syntax is
+
+```shell
+./solo_test TransA TransB <start> <stop> <step> <repetitions> 
+```
+
+where `TransA` and `TransB` can be either `"T"` or `"N"`, indicating
+transposition, or no transposition, respectively, and the other
+arguments should be positive integers. The performance is measured by
+running the `gemm` implementation `<repetitions>` times and recording
+the maximum GFLOPS attained, over randomised square matrices with
+number of columns `<start>` to `<stop>` in steps `<step>`. 
+
+Here's an example:
+
+```shell
+./solo_test "T" "N" 480 4800 48 3
+```
+
+will benchmark the `dgemm` variant `C += A^T B`, starting by letting
+`A` and `B` be random 480 x 480 matrices, recording the maximum
+performance over 3 iterations, then taking `A` and `B` to be random
+528 x 528 matrices, and so on, until finally testing random 4800 x
+4800 matrices.
+
+An easier option is to benchmark with the Python script
+`tests/solo_bench.py`. This assumes that the location of the
+executable `solo_test` is `builddir`, and will generate a plot showing
+performance as a function of size.
+
 
 # Cache parameter notes #
 
-The compile-time constants MC, NC, KC represent the sizes of the
-blocks into which the matrices are broken up in the cache, and MR, NR
-represent the size of the matrices to move into the registers. MR and
-NR also determine the size of the microkernel to use, and this is done
-at compile time.
+Some good choices of cache parameters can be suggested by running the
+Python script `get_cache_params.py`. This suggests cache parameters
+based on (Low, et al.)[https://dl.acm.org/doi/10.1145/2925987], using
+some information about hardware data from (Agner Fog's
+tables)[https://www.agner.org/optimize/instruction_tables.pdf]. This
+script does not contain an exhaustive list of CPUs which are supported
+in principle. If you find your CPU does support AVX2, but is not
+supported yet, then it may be added in the future, and probably is
+only missing because I preferred to implement other features
+first. This will also not stop you actually running Gemmini, since the
+suggested cache parameters are only suggestions, and not requirements.
 
-Currently, a few microkernels are supported, but the default is set to
-8 x 4 since this works effectively on the Ryzen 5600X used for
-testing.  These parameters can and should be adjusted for different
-CPUs.
+So far, this only suggests compile-time constants which are strictly
+relevant to the microkernel: the dimensions of the microkernel (`MR`
+and `NR`), and the number of updates performed on the microtile
+(`PC`). The first two can be passed as the first two arguments to
+`build.sh`. The latter can be adjusted in the meson build file, or
+passed as a compile-time constant in whatever other way you prefer.
 
-A script to automatically adjust them to optimal values for a given
-CPU is on the to-do list.
+Similarly, you'll probably find that the suggested build parameters
+are nearly but not exactly optimal. For example, when testing `dgemm`
+on the Ryzen 5 5600X, I found that an 8 x 6 microkernel works well,
+even though the usual algorithm suggests 8 x 4. You are free to try
+any legal parameters out and completely ignore these suggestions, and
+may even find better performance. This is likely due to the current
+build not meeting all of the assumptions made in the paper mentioned
+earlier, because some features are not implemented yet.
