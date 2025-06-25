@@ -145,7 +145,6 @@ An easier option is to benchmark with the Python script
 executable `solo_test` is `builddir`, and will generate a plot showing
 performance as a function of size.
 
-
 # Cache parameter notes #
 
 Some good choices of cache parameters can be suggested by running the
@@ -175,3 +174,10 @@ any legal parameters out and completely ignore these suggestions, and
 may even find better performance. This is likely due to the current
 build not meeting all of the assumptions made in the paper mentioned
 earlier, because some features are not implemented yet.
+
+
+# Other notes #
+
+A sincere thank you to the University of Texas at Austin team for
+their time and effort making great BLAS-related educational resources
+freely available.

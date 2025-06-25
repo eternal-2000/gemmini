@@ -2,7 +2,7 @@
 #define BUFFERS_H
 
 #include<string.h>
-#include "kernels/kernel.h"
+#include "kernels/dgemm_kernel.h"
 #include "gentools/minmax.h"
 #include "memparams.h"
 
