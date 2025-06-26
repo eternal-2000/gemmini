@@ -3,8 +3,8 @@
 Gemmini is an early stage, experimental approach to the implementation
 of the level-3 BLAS.  Gemmini aims to instantiate a version of the
 level-3 BLAS operations, specialised to a system's specific
-architecture. It does this in a similar way to BLIS rather than ATLAS
-(i.e. no computationally-intensive autotuning).
+architecture. It does this by generating code automatically from a
+high-level abstract representation of each BLAS operation.
 
 Gemmini is a hobby project, made purely out of enjoyment. This readme
 is also intended for people who may have some curiosity about the
@@ -23,16 +23,16 @@ implementation will be needed for this.
 
 # General description and use #
 
-Gemmini takes a slightly different approach to implementing the BLAS
-operations. First, an abstract intermediate representation of a given
-operation is constructed, and then the intermediate representation is
-mapped to a target language and architecture (e.g. an implementation
-of GEMM in C for a CPU with 256-bit YMM registers). The abstraction of
-the operation itself away from any particular representation in a
-given language is intended to allow easy extension to different
-architectures, or different languages, and handle different float
-precisions easily, as well as making extension to new operations
-easier in principle.
+Gemmini works by first constructing an abstract intermediate
+representation of a given operation, which roughly resembles how you
+might describe the procedure at a high-level to a person. Then the
+intermediate representation is mapped to a target language and
+architecture (e.g. an implementation of GEMM in C for a CPU with
+256-bit YMM registers). The abstraction of the operation itself away
+from any particular representation in a given language is intended to
+allow easy extension to different architectures, or different
+languages, and handle different float precisions easily, as well as
+making extension to new operations easier in principle. 
 
 Currently, the user can invoke the code generation process by calling
 a simple Bash script in the `generators` directory: `build.sh`. This
@@ -179,4 +179,4 @@ earlier, because some features are not implemented yet.
 
 A sincere thank you to the University of Texas at Austin team for
 their time and effort making great BLAS-related educational resources
-freely available.
+freely available. 
