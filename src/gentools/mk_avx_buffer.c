@@ -1,4 +1,5 @@
 #include "gentools/buffers.h"
+#include "kernels/dgemm_kernel.h"
 
 void mk_avx_buffer(int m, int n, int p, double* A, double* B, double* C, int ldC){
   double* C_buff = (double*) _mm_malloc(MR * NR *sizeof(double), CACHE_ALIGN);

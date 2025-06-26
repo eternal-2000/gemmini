@@ -1,10 +1,10 @@
 #include "testing.h"
 /**
-  Reports performance of the test dgemm function, without comparison to BLAS.
+  Reports performance of the test sgemm function, without comparison to BLAS.
  */
 
-void solo_test(char* transA, char* transB,
-	       int init_n, int final_n, int inc, int reps){
+void sgemm_solo_test(char* transA, char* transB,
+		     int init_n, int final_n, int inc, int reps){
   unsigned long sq;
   double gflops;
   double best;
@@ -15,24 +15,24 @@ void solo_test(char* transA, char* transB,
     sq = n * n;
     gflops = 2 * sq * n * 1e-09;
 
-    double* A = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN);
-    double* B = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN);
-    double* C = (double*) _mm_malloc(sq * sizeof(double), CACHE_ALIGN);
+    float* A = (float*) _mm_malloc(sq * sizeof(float), CACHE_ALIGN);
+    float* B = (float*) _mm_malloc(sq * sizeof(float), CACHE_ALIGN);
+    float* C = (float*) _mm_malloc(sq * sizeof(float), CACHE_ALIGN);
 
     if (!A || !B || !C){
       fprintf(stderr, "Failed to allocate memory to matrices.\n");
       exit(EXIT_FAILURE);
     }
 
-    randomiseM(n, n, A, n);
-    randomiseM(n, n, B, n);
-    randomiseM(n, n, C, n);
+    randomiseM_32(n, n, A, n);
+    randomiseM_32(n, n, B, n);
+    randomiseM_32(n, n, C, n);
 
-    double s = 1.0;    
+    float alpha = 1.0;
     best = 0.;
     for (int t = 0; t < reps; ++t){
       double start = omp_get_wtime();
-      testgemm(transA, transB, n, n, n, s, A, n, B, n, C, n);
+      test_sgemm(transA, transB, n, n, n, alpha, A, n, B, n, C, n);
       double end = omp_get_wtime();
 
       double exec_time = end - start;
@@ -63,6 +63,6 @@ int main(int argc, char** argv){
   init_n = (init_n/inc) * inc;
   final_n = (final_n/inc) * inc;
 
-  solo_test(transA, transB, init_n, final_n, inc, reps);  
+  sgemm_solo_test(transA, transB, init_n, final_n, inc, reps);  
   return 0;
 }

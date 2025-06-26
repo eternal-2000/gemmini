@@ -4,11 +4,6 @@ add_project_arguments(
   '-Wall', '-O3', '-march=native', '-funroll-loops',
   '-ffast-math', '-fassociative-math', '-mfma', '-mavx2',
   '-fopenmp', '-D_POSIX_C_SOURCE=200809L',
-  '-DMR=' + get_option('MR'),
-  '-DNR=' + get_option('NR'),
-  '-DMC=' + get_option('MC'),
-  '-DNC=' + get_option('NC'),
-  '-DPC=' + get_option('PC'),
   language: 'c'
 )
 
@@ -34,6 +29,11 @@ if blis_comp
     dependencies: [dependency('openmp')]
   )
 endif
-  
+
+# sgemm constants
+# sgemm_const = [
+#   '-DMR=16', '-DNR=4', '-DPC=384', '-DMC=256', '-DNC=8192'
+# ]
+
 subdir('src')
 subdir('tests')

@@ -86,11 +86,10 @@ expansion to both other traditional level-3 BLAS operations, and
 alternative variants of the standard BLAS operations.
 
 An implementation of the loops around the microkernel is also provided
-for `dgemm`, so the full `dgemm` operation is supported presently on
-the CPU, minus some optimisations. An `sgemm` implementation will be
-added in the future. Features will generally be added by focusing on
-the double-precision implementation first, and single-precision
-versions will be added later, with much lower priority.
+for `dgemm` and `sgemm`, minus some optimisations.  Features will
+generally be added by focusing on the double-precision implementation
+first, and single-precision versions will be added later, with much
+lower priority.
 
 Currently, Gemmini assumes that the row micropanel will be used for
 broadcasting, and not the column micropanel. This means that the

@@ -1,11 +1,5 @@
 option('blis_comp', type: 'boolean', value: false, description: 'Enable comparison against BLIS reference - used in development')
 option('blis_path', type: 'string', value: '', description: 'Path to BLIS reference functions')
 
-option('MR', type: 'string', value: '8', description: 'Register row size')
-option('NR', type: 'string', value: '4', description: 'Register column size')
-option('MC', type: 'string', value: '128', description: 'Cache row size')
-option('NC', type: 'string', value: '4096', description: 'Cache column size')
-option('PC', type: 'string', value: '256', description: 'Microkernel loop length')
-
 option('check_accuracy', type: 'boolean', value: true, description: 'Build accuracy tests')
 option('run_accuracy_test', type: 'boolean', value: true, description: 'Test accuracy after build')

@@ -1,20 +1,10 @@
 #include "gentools/packing.h"
-/**
-  Implements packing micropanels of matrices A and B, and stores them
-  in (resp.) A_pack, B_pack. If a matrix cannot be tiled with MR x NR
-  micropanels, pads the micropanel with zeros to full MR x NR size.
-
-  Note: there is an asymmetry between the packing of A and B because
-  during the packing of B we also scale it by the scalar α in the
-  operation C += αAB.
- */
-
 /** --------------------------------------------------
-    Double precision
+    Single precision
     --------------------------------------------------
- */
+*/
 
-void packMicroA(char* transA, int m, int p, double* A, int ldA, double* A_pack){
+void packMicroA_32(char* transA, int m, int p, float* A, int ldA, float* A_pack){
   if (!strcmp(transA, "N")){
     for (int k = 0; k < p; ++k){
       for (int i = 0; i < m; ++i){
@@ -36,15 +26,15 @@ void packMicroA(char* transA, int m, int p, double* A, int ldA, double* A_pack){
   }
 }
 
-void packA(char* transA, int m, int p, double* A, int ldA, double* A_pack){
+void packA_32(char* transA, int m, int p, float* A, int ldA, float* A_pack){
   #pragma omp parallel for
   for (int i = 0; i < m; i += MR){
     int ib = MIN(MR, m - i);
-    packMicroA(transA, ib, p, &A[i], ldA, &A_pack[i * p]);
+    packMicroA_32(transA, ib, p, &A[i], ldA, &A_pack[i * p]);
   }
 }
 
-void packMicroB(char* transB, int p, int n, double alpha, double* B, int ldB, double* B_pack){
+void packMicroB_32(char* transB, int p, int n, float alpha, float* B, int ldB, float* B_pack){
   if (!strcmp(transB, "N")){
     for (int k = 0; k < p; ++k){
       for (int j = 0; j < n; ++j){
@@ -66,10 +56,10 @@ void packMicroB(char* transB, int p, int n, double alpha, double* B, int ldB, do
   }
 }
 
-void packB(char* transB, int p, int n, double alpha, double* B, int ldB, double* B_pack){
+void packB_32(char* transB, int p, int n, float alpha, float* B, int ldB, float* B_pack){
   #pragma omp parallel for
   for (int j = 0; j < n; j += NR){
     int jb = MIN(NR, n - j);
-    packMicroB(transB, p, jb, alpha, &B[j * ldB], ldB, &B_pack[j * p]);
+    packMicroB_32(transB, p, jb, alpha, &B[j * ldB], ldB, &B_pack[j * p]);
   }
 }
