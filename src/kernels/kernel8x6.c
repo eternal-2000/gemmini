@@ -1,5 +1,6 @@
-#include "kernels/kernel8x6.h"
+#include<immintrin.h> 
 void kernel8x6(int p, double* A, double* B, double* C, int ldC){
+  /** An example dgemm microkernel, not automatically generated */
   __m256d c_0123_0 = _mm256_load_pd(&C[0]);
   __m256d c_0123_1 = _mm256_load_pd(&C[ldC]);
   __m256d c_0123_2 = _mm256_load_pd(&C[2 * ldC]);
