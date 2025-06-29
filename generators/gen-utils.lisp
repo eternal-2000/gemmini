@@ -29,6 +29,8 @@ Creates new list by taking one element of a, then SPACING elements of b,
 
 (defun positivep (x) (and (realp x) (> x 0)))
 
+(defun posintp (x) (compose-call (and positivep integerp) x))
+
 (defun symbol-to-parameter (sym) (symbol-value (intern (emit "*~a*" (symbol-name sym)))))
 
 (defun flatten (x)

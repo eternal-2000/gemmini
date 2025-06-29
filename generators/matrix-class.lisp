@@ -14,11 +14,11 @@
 	 :type (or null string))
    (rows :initarg :rows
 	 :reader matrix-rows
-	 :initform 0
+	 :initform 1
 	 :type integer)
    (columns :initarg :columns
 	    :reader matrix-columns
-	    :initform 0
+	    :initform 1
 	    :type integer)
    (float-size :initarg :float-size
 	       :reader matrix-float-size
@@ -33,7 +33,7 @@
   (:documentation "Subclass of MATRIX which has exactly 1 row"))
 
 (defclass scalar (column-vector row-vector) ()
-  (:documentation "Subclass of MATRIX with exactly 1 entry."))
+  (:documentation "Subclass of COLUMN-VECTOR and ROW-VECTOR, i.e. MATRIX with exactly 1 entry."))
 
 (defun make-matrix (name rows columns float-size)
   (make-instance 'matrix :name name :rows rows :columns columns :float-size float-size))
@@ -46,6 +46,10 @@
 
 (defun make-scalar (name float-size)
   (make-instance 'scalar :name name :rows 1 :columns 1 :float-size float-size))
+
+(defmethod initialize-instance :after ((mat matrix) &key &allow-other-keys)
+  (unless (and (posintp (matrix-rows mat)) (posintp (matrix-columns mat)))
+    (error "Matrix dimensions must be positive integers")))
 
 (defmethod initialize-instance :after ((vec column-vector) &key &allow-other-keys)
   (unless (= (matrix-columns vec) 1) (error "Column vectors must have exactly 1 column")))
