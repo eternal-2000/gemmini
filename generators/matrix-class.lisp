@@ -32,6 +32,21 @@
 (defclass row-vector (matrix) ()
   (:documentation "Subclass of MATRIX which has exactly 1 row"))
 
+(defclass scalar (column-vector row-vector) ()
+  (:documentation "Subclass of MATRIX with exactly 1 entry."))
+
+(defun make-matrix (name rows columns float-size)
+  (make-instance 'matrix :name name :rows rows :columns columns :float-size float-size))
+
+(defun make-column-vector (name rows float-size)
+  (make-instance 'column-vector :name name :rows rows :columns 1 :float-size float-size))
+
+(defun make-row-vector (name columns float-size)
+  (make-instance 'row-vector :name name :rows 1 :columns columns :float-size float-size))
+
+(defun make-scalar (name float-size)
+  (make-instance 'scalar :name name :rows 1 :columns 1 :float-size float-size))
+
 (defmethod initialize-instance :after ((vec column-vector) &key &allow-other-keys)
   (unless (= (matrix-columns vec) 1) (error "Column vectors must have exactly 1 column")))
 
@@ -146,9 +161,9 @@
 			     register-size
 			     &key (loop-index "k") (loop-length "p") (column-index "j"))
   (list
-   (make-block (matrix-init block-matrix register-size))
-   (make-block (matrix-declare col-vec register-size))
-   (make-block (vector-single-declare row-vec register-size
+   (make-block (matrix-init block-matrix register-size)
+	       (matrix-declare col-vec register-size)
+	       (vector-single-declare row-vec register-size
 				      :column-index column-index))
    (gemm-update-loop block-matrix col-vec row-vec register-size
 		     :loop-index loop-index :loop-length loop-length :column-index column-index)

@@ -23,18 +23,9 @@
 	 (nr (parse-integer (third args)))
 	 (float-size (parse-integer (fourth args)))
 	 (register-size (parse-integer (fifth args)))
-	 (mk-fn-def-rep (make-mk-gemm (make-instance 'matrix
-						     :name "C"
-						     :rows mr :columns nr
-						     :float-size float-size)
-				      (make-instance 'column-vector
-						     :name "A"
-						     :rows mr :columns 1
-						     :float-size float-size)
-				      (make-instance 'row-vector
-						     :name "B"
-						     :rows 1 :columns nr
-						     :float-size float-size)
+	 (mk-fn-def-rep (make-mk-gemm (make-matrix "C" mr nr float-size)
+				      (make-column-vector "A" mr float-size)
+				      (make-row-vector "B" nr float-size)
 				      :register-size register-size)))
     (cond ((not (= (mod mr 4) 0))
 	   (error "Number of rows in microtile should be multiple of 4 (for now)"))
