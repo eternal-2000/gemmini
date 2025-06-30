@@ -46,6 +46,25 @@
   (unless (= (matrix-rows vec) 1) (error "Row vectors must have exactly 1 row")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Matrix utilities
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmacro do-matrix ((element-sym row-index col-index) matrix step &body body)
+  "Applies BODY to elements of MATRIX in column-major order, with step-sizes STEP:
+(ELEMENT-SYM ROW-INDEX COL-INDEX) substitutes for elements of MATRIX in expression BODY"
+  (with-gensyms (i j mat)
+    `(let ((,mat ,matrix))
+       (mapcan (lambda (,j)
+		 (mapcar (lambda (,i)
+			   (funcall (lambda (,element-sym ,row-index ,col-index)
+				      ,@body)
+				    ,mat ,i ,j))
+			 (range (matrix-rows ,mat) 0 ,step)))
+	       (range (matrix-columns ,mat))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 
 (defmethod matrix-declare ((mat matrix) register-size)
   (let ((data-size (matrix-float-size mat)))
