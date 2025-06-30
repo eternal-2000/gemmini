@@ -8,10 +8,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass matrix ()
-  ((name :initarg :name :reader matrix-name :initform nil :type (or null string))
+  ((name :initarg :name :reader matrix-name :type (or null string))
    (rows :initarg :rows :reader matrix-rows :initform 1 :type integer)
    (columns :initarg :columns :reader matrix-columns :initform 1 :type integer)
-   (float-size :initarg :float-size :reader matrix-float-size :initform *double-size* :type (member *precisions*)))
+   (float-size :initarg :float-size :reader matrix-float-size :initform *double-size*
+	       :type (member *precisions*)))
   (:documentation "Class of matrices with entries floats of fixed precision, given in bits"))
 
 (defclass column-vector (matrix) ()
@@ -63,8 +64,6 @@
 	       (range (matrix-columns ,mat))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 
 (defmethod matrix-declare ((mat matrix) register-size)
   (let ((data-size (matrix-float-size mat)))

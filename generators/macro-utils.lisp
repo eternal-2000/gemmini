@@ -38,20 +38,3 @@
        (,op ,@(mapcar (lambda (f)
 			`(,(build-recurse f) ,g))
 		      fnlist)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Matrix utilities
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defmacro do-matrix ((element-sym row-index col-index) matrix step &body body)
-  "Applies BODY to elements of MATRIX in column-major order, with step-sizes STEP:
-(ELEMENT-SYM ROW-INDEX COL-INDEX) substitutes for elements of MATRIX in expression BODY"
-  (with-gensyms (i j mat)
-    `(let ((,mat ,matrix))
-       (mapcan (lambda (,j)
-		 (mapcar (lambda (,i)
-			   (funcall (lambda (,element-sym ,row-index ,col-index)
-				      ,@body)
-				    ,mat ,i ,j))
-			 (range (matrix-rows ,mat) 0 ,step)))
-	       (range (matrix-columns ,mat))))))
