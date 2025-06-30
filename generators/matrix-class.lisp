@@ -8,22 +8,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass matrix ()
-  ((name :initarg :name
-	 :reader matrix-name
-	 :initform nil
-	 :type (or null string))
-   (rows :initarg :rows
-	 :reader matrix-rows
-	 :initform 1
-	 :type integer)
-   (columns :initarg :columns
-	    :reader matrix-columns
-	    :initform 1
-	    :type integer)
-   (float-size :initarg :float-size
-	       :reader matrix-float-size
-	       :initform *double-size*
-	       :type (member *precisions*)))
+  ((name :initarg :name :reader matrix-name :initform nil :type (or null string))
+   (rows :initarg :rows :reader matrix-rows :initform 1 :type integer)
+   (columns :initarg :columns :reader matrix-columns :initform 1 :type integer)
+   (float-size :initarg :float-size :reader matrix-float-size :initform *double-size* :type (member *precisions*)))
   (:documentation "Class of matrices with entries floats of fixed precision, given in bits"))
 
 (defclass column-vector (matrix) ()
@@ -58,26 +46,6 @@
   (unless (= (matrix-rows vec) 1) (error "Row vectors must have exactly 1 row")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Matrix utilities
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defmacro do-matrix ((element-sym row-index col-index) matrix step &body body)
-  "Applies BODY to elements of MATRIX in column-major order, with step-sizes STEP:
-(ELEMENT-SYM ROW-INDEX COL-INDEX) substitutes for elements of MATRIX in expression BODY"
-  (with-gensyms (i j mat)
-    `(let ((,mat ,matrix))
-       (mapcan (lambda (,j)
-		 (mapcar (lambda (,i)
-			   (funcall (lambda (,element-sym ,row-index ,col-index)
-				      ,@body)
-				    ,mat ,i ,j))
-			 (range (matrix-rows ,mat) 0 ,step)))
-	       (range (matrix-columns ,mat))))))
-
-(defun posintp (x) (compose-call (and positivep integerp) x))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defmethod matrix-declare ((mat matrix) register-size)
   (let ((data-size (matrix-float-size mat)))

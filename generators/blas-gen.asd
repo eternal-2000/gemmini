@@ -1,6 +1,7 @@
 (asdf:defsystem "blas-gen"
   :serial t
   :components ((:file "datatypes")
+	       (:file "macro-utils")
 	       (:file "gen-utils")
 	       (:file "representation")
 	       (:file "matrix-class")

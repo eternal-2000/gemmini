@@ -12,31 +12,27 @@
                        (and (consp x)
                             (every #'is-instruction x))))
                  ops))
-  (cond ((and (= (length ops) 1)             
+  (cond ((and (= (length ops) 1)
               (consp (first ops))              
               (is-rep (first ops) 'op-block))  
-         (first ops))                          
-        ((= (length ops) 1)                  
-         (cons 'op-block ops))               
+         (first ops))              
+        ((= (length ops) 1)
+         (cons 'op-block ops))
         (t (cons 'op-block
 		 (mapcar #'make-block ops)))))
 
 (defun make-init (type var val)
   (assert (and (is-rep type 'type)
-	       (or (is-rep var 'var)
-		   (and (is-rep var 'memref) (eq (second var) 'dereference)))
+	       (is-identifier var)
 	       (compose-call (or numberp is-funarg) val)))
   (list 'init type var val))
 
 (defun make-dec (type var)
-  (assert (and (is-rep type 'type)
-	       (or (is-rep var 'var)
-		   (and (is-rep var 'memref) (eq (second var) 'dereference)))))
+  (assert (and (is-rep type 'type) (is-identifier var)))
   (list 'dec type var))
 
 (defun make-assign (var val)
-  (assert (and (or (is-rep var 'var)
-		   (and (is-rep var 'memref) (eq (second var) 'dereference)))
+  (assert (and (is-identifier var)
 	       (compose-call (or numberp is-funarg) val)))
   (list 'assign var val))
 
@@ -100,5 +96,9 @@
 (defun is-instruction (x) (is-rep-one-of x *op-dict*))
 
 (defun is-funarg (x) (is-rep-one-of x *funarg-options*))
+
+(defun is-identifier (x)
+  (or (is-rep x 'var)
+      (and (is-rep x 'memref) (eq (second x) 'dereference))))
 
 (defun is-rep-one-of (x tag-list) (and (consp x) (member (first x) tag-list)))
