@@ -11,6 +11,26 @@ void solo_test(char* transA, char* transB,
   double average = 0.0;
   int num_trials = ((final_n - init_n)/inc) * reps;
 
+  /** Warmup section to allow more accurate first readings **/
+
+  double* warmup_A = (double*) _mm_malloc(64 * 64 * sizeof(double), CACHE_ALIGN);
+  double* warmup_B = (double*) _mm_malloc(64 * 64 * sizeof(double), CACHE_ALIGN);
+  double* warmup_C = (double*) _mm_malloc(64 * 64 * sizeof(double), CACHE_ALIGN);
+  
+  randomiseM(64, 64, warmup_A, 64);
+  randomiseM(64, 64, warmup_B, 64);
+  randomiseM(64, 64, warmup_C, 64);
+  
+  for (int i = 0; i < 3; i++) {
+    testgemm(transA, transB, 64, 64, 64, 1.0, warmup_A, 64, warmup_B, 64, warmup_C, 64);
+  }
+  
+  _mm_free(warmup_A);
+  _mm_free(warmup_B);
+  _mm_free(warmup_C);  
+
+  /** End of warmup section **/
+  
   for (int n = init_n; n <= final_n; n += inc){
     sq = n * n;
     gflops = 2 * sq * n * 1e-09;
