@@ -13,7 +13,6 @@ sgemm_const = [
 ]
 
 dgemm_const_sources = files(
-  'testgemm.c',
   'dgemm.c',
   'kernels/dgemm_kernel.c',
   'gentools/packing.c',
@@ -60,14 +59,14 @@ if blis_comp
   ) + shared_sources
 
   executable('blis_perf',
-             ['driver.c', 'test_performance.c'] + shared_sources,
+             ['test_performance.c', 'test_dgemm.c'] + shared_sources,
              link_with: dgemm_lib,
              include_directories: inc_dir,
              dependencies: blis_dep
             )
 
   executable('blis_acc',
-             ['test_accuracy.c'] + acc_sources,
+             ['test_accuracy.c', 'test_dgemm.c'] + acc_sources,
              link_with: dgemm_lib,
              include_directories: inc_dir,
              dependencies: blis_dep
@@ -92,14 +91,14 @@ if blis_comp
   # endif
 endif
 
-executable('solo_test',
-           ['solo_test.c', 'gentools/argcount.c'] + shared_sources,
+executable('dgemm_solo_test',
+           ['dgemm_solo_test.c', 'test_dgemm.c', 'gentools/argcount.c'] + shared_sources,
            link_with: dgemm_lib,
            include_directories: inc_dir,
            dependencies: [dependency('openmp')]
           )
 
-executable('solo_sgemm_test',
+executable('sgemm_solo_test',
            ['sgemm_solo_test.c', 'test_sgemm.c', 'gentools/argcount.c'] + shared_sources,
            link_with: sgemm_lib,
            include_directories: inc_dir,

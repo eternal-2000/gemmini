@@ -88,10 +88,11 @@ expansion to both other traditional level-3 BLAS operations, and
 alternative variants of the standard BLAS operations.
 
 An implementation of the loops around the microkernel is also provided
-for `dgemm` and `sgemm`, minus some optimisations.  Features will
-generally be added by focusing on the double-precision implementation
-first, and single-precision versions will be added later, with much
-lower priority.
+for `dgemm` and `sgemm`, minus some optimisations, such as
+prefetching. This means that the optimal microkernel parameters will
+not be exactly as suggested in the literature, which assumes
+prefetching is implemented. More on this in the [cache parameter
+section](#Cache-section).
 
 Currently, Gemmini assumes that the row micropanel will be used for
 broadcasting, and not the column micropanel. This means that the
@@ -110,29 +111,32 @@ usually hit around 90% of BLIS performance, or greater. It is also
 possible to play with parameters to get much closer to parity with
 BLIS than this.
 
-Currently, you can test the performance of a particular `dgemm`
-implementation in two ways. You can either test it on its own and
-record its performance in gigaflops per second (GFLOPS) with
-`solo_test`, or you can compare it to a reference (BLIS)
-implementation.
+Currently, you can test the performance of a particular `gemm` (either
+`sgemm` or `dgemm`) implementation in two ways. You can either test it
+on its own and record its performance in gigaflops per second (GFLOPS)
+with `Xgemm_solo_test` (where `Xgemm` can be either `sgemm` or
+`dgemm`), or you can compare it to a reference (BLIS) implementation.
 
-To benchmark with `solo_test`, the syntax is
+This is mostly for development purposes, but is still included for
+documentation purposes.
+
+To benchmark with `Xgemm_solo_test`, the syntax is
 
 ```shell
-./solo_test TransA TransB <start> <stop> <step> <repetitions> 
+./Xgemm_solo_test TransA TransB start stop step repetitions
 ```
 
 where `TransA` and `TransB` can be either `"T"` or `"N"`, indicating
 transposition, or no transposition, respectively, and the other
 arguments should be positive integers. The performance is measured by
-running the `gemm` implementation `<repetitions>` times and recording
+running the `gemm` implementation `repetitions` times and recording
 the maximum GFLOPS attained, over randomised square matrices with
-number of columns `<start>` to `<stop>` in steps `<step>`. 
+number of columns `start` to `stop` in steps `step`.
 
 Here's an example:
 
 ```shell
-./solo_test "T" "N" 480 4800 48 3
+./dgemm_solo_test "T" "N" 480 4800 48 3
 ```
 
 will benchmark the `dgemm` variant `C += A^T B`, starting by letting
@@ -141,12 +145,12 @@ performance over 3 iterations, then taking `A` and `B` to be random
 528 x 528 matrices, and so on, until finally testing random 4800 x
 4800 matrices.
 
-An easier option is to benchmark with the Python script
+An easier visual option is to benchmark with the Python script
 `tests/solo_bench.py`. This assumes that the location of the
-executable `solo_test` is `builddir`, and will generate a plot showing
-performance as a function of size.
+executable `Xgemm_solo_test` is `builddir`, and will generate a plot
+showing performance as a function of size.
 
-# Cache parameter notes #
+# <a id="Cache-section"></a>Cache parameter notes #
 
 Some good choices of cache parameters can be suggested by running the
 Python script `get_cache_params.py`. This suggests cache parameters
@@ -167,15 +171,22 @@ and `NR`), and the number of updates performed on the microtile
 `build.sh`. The latter can be adjusted in the meson build file, or
 passed as a compile-time constant in whatever other way you prefer.
 
-Similarly, you'll probably find that the suggested build parameters
-are nearly but not exactly optimal. For example, when testing `dgemm`
+Similarly, you may find that the suggested build parameters are nearly
+but not exactly optimal. For a trivial example, when testing `dgemm`
 on the Ryzen 5 5600X, I found that an 8 x 6 microkernel works well,
-even though the usual algorithm suggests 8 x 4. You are free to try
-any legal parameters out and completely ignore these suggestions, and
-may even find better performance. This is likely due to the current
-build not meeting all of the assumptions made in the paper mentioned
-earlier, because some features are not implemented yet.
+even though the usual algorithm suggests 8 x 4.
 
+This is most likely because pre-fetching is not currently implemented,
+so 15 of the 16 vector registers being used in an 8 x 6 microkernel
+allows for more useful work to be done, whereas 8 x 4 microkernels use
+only 11 of 16. Without prefetching, the latter will be less
+effective. Prefetching will be implemented in a future update.
+
+You are free to try any legal parameters out and completely ignore
+these suggestions, and may even find better performance. This is
+likely due to the current build not meeting all of the assumptions
+made in the paper mentioned earlier, because some features are not
+implemented yet.
 
 # Other notes #
 

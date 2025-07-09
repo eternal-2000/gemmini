@@ -3,8 +3,8 @@
   Reports performance of the test dgemm function, without comparison to BLAS.
  */
 
-void solo_test(char* transA, char* transB,
-	       int init_n, int final_n, int inc, int reps){
+void dgemm_solo_test(char* transA, char* transB,
+		     int init_n, int final_n, int inc, int reps){
   unsigned long sq;
   double gflops;
   double best;
@@ -22,7 +22,7 @@ void solo_test(char* transA, char* transB,
   randomiseM(64, 64, warmup_C, 64);
   
   for (int i = 0; i < 3; i++) {
-    testgemm(transA, transB, 64, 64, 64, 1.0, warmup_A, 64, warmup_B, 64, warmup_C, 64);
+    test_dgemm(transA, transB, 64, 64, 64, 1.0, warmup_A, 64, warmup_B, 64, warmup_C, 64);
   }
   
   _mm_free(warmup_A);
@@ -52,7 +52,7 @@ void solo_test(char* transA, char* transB,
     best = 0.;
     for (int t = 0; t < reps; ++t){
       double start = omp_get_wtime();
-      testgemm(transA, transB, n, n, n, s, A, n, B, n, C, n);
+      test_dgemm(transA, transB, n, n, n, s, A, n, B, n, C, n);
       double end = omp_get_wtime();
 
       double exec_time = end - start;
@@ -83,6 +83,6 @@ int main(int argc, char** argv){
   init_n = (init_n/inc) * inc;
   final_n = (final_n/inc) * inc;
 
-  solo_test(transA, transB, init_n, final_n, inc, reps);  
+  dgemm_solo_test(transA, transB, init_n, final_n, inc, reps);  
   return 0;
 }
