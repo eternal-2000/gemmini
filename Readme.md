@@ -123,7 +123,7 @@ documentation purposes.
 To benchmark with `Xgemm_solo_test`, the syntax is
 
 ```shell
-./Xgemm_solo_test TransA TransB start stop step repetitions
+./path/to/Xgemm_solo_test TransA TransB start stop step repetitions
 ```
 
 where `TransA` and `TransB` can be either `"T"` or `"N"`, indicating
@@ -136,7 +136,7 @@ number of columns `start` to `stop` in steps `step`.
 Here's an example:
 
 ```shell
-./dgemm_solo_test "T" "N" 480 4800 48 3
+./builddir/src/dgemm_solo_test "T" "N" 480 4800 48 3
 ```
 
 will benchmark the `dgemm` variant `C += A^T B`, starting by letting
