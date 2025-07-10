@@ -78,7 +78,7 @@ def solo_bench(name: str, init_n: int, final_n: int, inc: int = 48, reps: int = 
 
 if __name__ == "__main__":
     try:
-        solo_bench("solo_test", 48, 2400)
+        solo_bench("dgemm_solo_test", 48, 2400)
     except Exception as err:
         print(f"Fatal error: {err}", file = sys.stderr)
         sys.exit(1)    

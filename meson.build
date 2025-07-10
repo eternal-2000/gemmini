@@ -30,10 +30,5 @@ if blis_comp
   )
 endif
 
-# sgemm constants
-# sgemm_const = [
-#   '-DMR=16', '-DNR=4', '-DPC=384', '-DMC=256', '-DNC=8192'
-# ]
-
 subdir('src')
 subdir('tests')
