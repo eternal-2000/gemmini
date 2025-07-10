@@ -17,14 +17,14 @@
 (defun c-directive (x) (emit "#~a" x))
 
 (defun c-indent (lines &optional (level 0))
-  (assert (or (stringp lines) (consp lines)))
+  (assert (compose-call (or stringp consp) lines))
   (flet ((indent-string (line level)
 	   (cat (make-string (* 4 level)
 			     :initial-element #\Space)
 		line)))
     (if (stringp lines) (indent-string lines level)
-	(mapcar (lambda (line)
-		  (indent-string line level))
+	(mapcar (lambda (x)
+		  (indent-string x level))
 		lines))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -41,16 +41,12 @@
       (column-vector (emit "~a[~a]" mat-name row))
       (row-vector (emit "~a[~a]" mat-name column))
       (matrix (if (and (numberp column) (= column 1))
-		  (if (and (numberp row) (zerop row)) (emit "~a[~a]" mat-name stride)
+		  (if (eq row 0) (emit "~a[~a]" mat-name stride)
 		      (emit "~a[~a + ~a]" mat-name row stride))
-		  (cond ((and (numberp row) (numberp column) (zerop row) (zerop column))
-			 (emit "~a[0]" mat-name))
-			((and (numberp column) (zerop column))
-			 (emit "~a[~a]" mat-name row))
-			((and (numberp row) (zerop row))
-			 (emit "~a[~a * ~a]" mat-name column stride))
-			(t
-			 (emit "~a[~a + ~a * ~a]" mat-name row column stride))))))))
+		  (cond ((and (eq row 0) (eq column 0)) (emit "~a[0]" mat-name))
+			((eq column 0) (emit "~a[~a]" mat-name row))
+			((eq row 0) (emit "~a[~a * ~a]" mat-name column stride))
+			(t (emit "~a[~a + ~a * ~a]" mat-name row column stride))))))))
 
 (defmethod matrix-address ((mat matrix) row column) (emit "&~a" (matrix-entry mat row column)))
 
@@ -223,7 +219,8 @@ may denote elements of a column vector."))
 			   (fourth fn-def-rep)))
 	(arg-list (mapcar #'c-var (fifth fn-def-rep)))
 	(body (reduce-string-list
-	       (c-translate (sixth fn-def-rep)))))
+	       (flatten
+		(c-translate (sixth fn-def-rep))))))
     (emit "~a ~a(~{~a ~a~^, ~}){~%~a~%}"
 	  return-type
 	  fn-name

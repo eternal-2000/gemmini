@@ -8,10 +8,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass matrix ()
-  ((name :initarg :name :reader matrix-name :type (or null string))
-   (rows :initarg :rows :reader matrix-rows :initform 1 :type integer)
-   (columns :initarg :columns :reader matrix-columns :initform 1 :type integer)
-   (float-size :initarg :float-size :reader matrix-float-size :initform *double-size*
+  ((name :initarg :name
+	 :reader matrix-name
+	 :type (or null string))
+   (rows :initarg :rows
+	 :reader matrix-rows
+	 :initform 1
+	 :type (or integer string))
+   (columns :initarg :columns
+	    :reader matrix-columns
+	    :initform 1
+	    :type (or integer string))
+   (float-size :initarg :float-size
+	       :reader matrix-float-size
+	       :initform *double-size*
 	       :type (member *precisions*)))
   (:documentation "Class of matrices with entries floats of fixed precision, given in bits"))
 
@@ -25,41 +35,120 @@
   (:documentation "Subclass of COLUMN-VECTOR and ROW-VECTOR, i.e. MATRIX with exactly 1 entry."))
 
 (defun make-matrix (name rows columns float-size)
-  (make-instance 'matrix :name name :rows rows :columns columns :float-size float-size))
+  (make-instance 'matrix :name (string name)
+			 :rows rows
+			 :columns columns
+			 :float-size float-size))
 
 (defun make-column-vector (name rows float-size)
-  (make-instance 'column-vector :name name :rows rows :columns 1 :float-size float-size))
+  (make-instance 'column-vector :name (string name)
+				:rows rows
+				:float-size float-size))
 
 (defun make-row-vector (name columns float-size)
-  (make-instance 'row-vector :name name :rows 1 :columns columns :float-size float-size))
+  (make-instance 'row-vector :name (string name)
+			     :columns columns
+			     :float-size float-size))
 
 (defun make-scalar (name float-size)
-  (make-instance 'scalar :name name :rows 1 :columns 1 :float-size float-size))
+  (make-instance 'scalar :name (string-downcase name)
+			 :float-size float-size))
 
 (defmethod initialize-instance :after ((mat matrix) &key &allow-other-keys)
-  (unless (and (posintp (matrix-rows mat)) (posintp (matrix-columns mat)))
-    (error "Matrix dimensions must be positive integers")))
+  (flet ((valid-dimension-p (x) (compose-call (or stringp posintp) x)))
+    (assert (and (valid-dimension-p (matrix-rows mat))
+		 (valid-dimension-p (matrix-columns mat))))))
 
 (defmethod initialize-instance :after ((vec column-vector) &key &allow-other-keys)
-  (unless (= (matrix-columns vec) 1) (error "Column vectors must have exactly 1 column")))
+  (assert (= (matrix-columns vec) 1)))
 
 (defmethod initialize-instance :after ((vec row-vector) &key &allow-other-keys)
-  (unless (= (matrix-rows vec) 1) (error "Row vectors must have exactly 1 row")))
+  (assert (= (matrix-rows vec) 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Matrix utilities
+;;;; Matrix descriptions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defgeneric emit-desc (matrix)
+  (:documentation "Returns describe-object as string, i.e. where STREAM argument is NIL"))
+(defmethod emit-desc ((obj matrix)) (describe-object obj nil))
+
+(defmethod describe-object ((s scalar) stream)
+  (format stream "~d-bit scalar ~a"
+	  (matrix-float-size s)
+	  (matrix-name s)))
+
+(defmethod describe-object ((v row-vector) stream)
+  (format stream "~d-bit ~a-element row vector ~a"
+	  (matrix-float-size v)
+	  (matrix-columns v)
+	  (matrix-name v)))
+
+(defmethod describe-object ((v column-vector) stream)
+  (format stream "~d-bit ~a-element column vector ~a"
+	  (matrix-float-size v)
+	  (matrix-rows v)
+	  (matrix-name v)))
+
+(defmethod describe-object ((mat matrix) stream)
+  (format stream "~d-bit ~d x ~d matrix ~a"
+	  (matrix-float-size mat)
+	  (matrix-rows mat)
+	  (matrix-columns mat)
+	  (matrix-name mat)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Operation validators
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defgeneric validate-mm (left-multiplier right-multiplier product)
+  (:documentation "Checks whether matrices can be multiplied and stored in product matrix.
+Only performs check on matrix dimensions; allows multiplication of different precisions."))
+
+(defmethod validate-mm ((left-multiplier scalar) (right-multiplier matrix) (product matrix))
+  (unless (and (equal (matrix-rows right-multiplier) (matrix-rows product))
+	       (equal (matrix-columns right-multiplier) (matrix-columns product)))
+    (error "Dimension mismatch:
+~a cannot be scaled by
+~a
+to give
+~a"
+	   (emit-desc right-multiplier)
+	   (emit-desc left-multiplier)
+	   (emit-desc product)))
+  (values))
+
+(defmethod validate-mm ((left-multiplier matrix) (right-multiplier scalar) (product matrix))
+  (validate-mm right-multiplier left-multiplier product))
+
+(defmethod validate-mm ((left-multiplier matrix) (right-multiplier matrix) (product matrix))
+  (unless (and (equal (matrix-rows product) (matrix-rows left-multiplier))
+	       (equal (matrix-columns product) (matrix-columns right-multiplier))
+	       (equal (matrix-columns left-multiplier) (matrix-rows right-multiplier)))
+    (error "Dimension mismatch:
+~a cannot multiply
+~a
+on the left to give
+~a"
+	   (emit-desc left-multiplier)
+	   (emit-desc right-multiplier)
+	   (emit-desc product)))
+  (values))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Matrix macro utilities
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmacro do-matrix ((element-sym row-index col-index) matrix step &body body)
   "Applies BODY to elements of MATRIX in column-major order, with step-sizes STEP:
-(ELEMENT-SYM ROW-INDEX COL-INDEX) substitutes for elements of MATRIX in expression BODY"
+(ELEMENT-SYM ROW-INDEX COL-INDEX) substitutes for MATRIX elements in expression BODY"
   (with-gensyms (i j mat)
     `(let ((,mat ,matrix))
        (mapcan (lambda (,j)
 		 (mapcar (lambda (,i)
-			   (funcall (lambda (,element-sym ,row-index ,col-index)
-				      ,@body)
-				    ,mat ,i ,j))
+			   (funcall
+			    (lambda (,element-sym ,row-index ,col-index) ,@body)
+			    ,mat ,i ,j))
 			 (range (matrix-rows ,mat) 0 ,step)))
 	       (range (matrix-columns ,mat))))))
 
@@ -113,7 +202,8 @@
 			    data-size register-size))))
 
 (defmethod vector-single-broadcast ((vec row-vector) register-size &key (column-index "j"))
-  (do-matrix (a i j) vec 1 (declare (ignore i))
+  (do-matrix (a i j) vec 1
+    (declare (ignore i))
     (single-broadcast-into-element a j register-size
 				   :column-index column-index)))
 
