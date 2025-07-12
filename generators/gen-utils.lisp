@@ -51,7 +51,14 @@ Creates new list by taking one element of a, then SPACING elements of b,
 
 (defun cat (&rest args) (apply #'concatenate 'string args))
 
-(defun reduce-string-list (x) (reduce (lambda (a b) (cat a (line-break) b)) x))
+(defun reduce-string-list (x)
+  (reduce (lambda (a b)
+	    (cat a
+		 (line-break)
+		 b))
+	  x))
+
+(defun flatten-to-string (x) (reduce-string-list (flatten x)))
 
 (defun line-break () (string #\Newline))
 

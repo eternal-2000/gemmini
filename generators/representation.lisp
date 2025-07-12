@@ -13,7 +13,9 @@
                        (and (consp x)
                             (every #'is-instruction x))))
                  ops))
-  (if (and (= (length ops) 1) (is-rep (first ops) 'op-block)) (first ops)
+  (if (and (= (length ops) 1)
+	   (is-rep (first ops) 'op-block))
+      (first ops)
       (cons 'op-block ops)))
 
 (defun make-init (type var val)
@@ -102,5 +104,4 @@
 
 (defun is-rep-one-of (x tag-list) (and (consp x) (member (first x) tag-list)))
 
-(defun is-special-form (x) ;; To be expanded as more special forms implemented
-  (member (first x) *special-tags*))
+(defun is-special-form (x) (member (first x) *special-tags*))

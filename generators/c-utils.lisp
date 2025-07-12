@@ -122,12 +122,11 @@ may denote elements of a column vector."))
 	 (args (third memref-rep))
 	 (mem-obj (first args)))
     (ecase name
-      (address (if (typep mem-obj 'matrix)
-		   (matrix-address mem-obj (second args) (third args))
+      (address (if (typep mem-obj 'matrix) (matrix-address mem-obj (second args) (third args))
 		   (error "Addresses of type ~a not implemented" (type-of mem-obj))))
       (dereference (emit "~a*" (first args))))))
 
-(defun c-pointer (pointer-rep) (emit "~a*" (c-type (cons 'type (cdr pointer-rep)))))
+(defun c-pointer (pointer-rep) (emit "~a*" (c-type (cons 'type (rest pointer-rep)))))
 
 (defun c-assign (assign-rep &optional (level 0))
   (let* ((var (c-var (second assign-rep)))
@@ -136,7 +135,7 @@ may denote elements of a column vector."))
 		  (c-translate val-rep level))))
     (c-indent (emit "~a = ~a;" var val) level)))
 
-(defun c-function-call (call-rep &optional nested (level 0))
+(defun c-function-call (call-rep &optional nested (level 1))
   (labels ((nested-call (rep)
 	     (let* ((name (second rep))
 		    (args (third rep))
@@ -162,14 +161,17 @@ may denote elements of a column vector."))
 
 (defun c-block (block-rep &optional (level 0))
   (cat (line-break)
-       (reduce-string-list (flatten
-			    (mapcar (lambda (x)
-				      (cond ((is-instruction x) (c-translate x level))
-					    ((and (consp x)
-						  (every #'is-instruction x))
-					     (mapcar (lambda (y) (c-translate y level)) x))
-					    (t (error "Received invalid op-block form"))))
-				    (rest block-rep))))))
+       (flatten-to-string
+	(mapcar (lambda (x)
+		  (cond ((is-instruction x) (c-translate x level))
+			((and (consp x)
+			      (every #'is-instruction x))
+			 (mapcar (lambda (y)
+				   (c-translate y level))
+				 x))
+			(t (error "Received invalid op-block form"))))
+		(rest block-rep)))
+       (line-break)))
 
 (defun c-build-for-loop (loop-rep &optional (level 0))
   (let ((type (second loop-rep))
@@ -178,19 +180,18 @@ may denote elements of a column vector."))
 	(stop-cond (fifth loop-rep))
 	(update (sixth loop-rep))
 	(loop-body (seventh loop-rep)))
-    (cat (line-break)
-	 (c-indent (emit "for (~a ~a = ~a; ~a; ~a)~a~%~a~%~a"
-			 (c-type type)
-			 (c-var index)
-			 init-value
-			 (c-comparison stop-cond)
-			 (c-function-call update t)
-			 (open-scope)
-			 (c-translate loop-body (+ 1 level))
-			 (c-indent (close-scope) level))
-		   level))))
+    (c-indent (emit "for (~a ~a = ~a; ~a; ~a)~a~%~a~%~a"
+		    (c-type type)
+		    (c-var index)
+		    init-value
+		    (c-comparison stop-cond)
+		    (c-function-call update t)
+		    (open-scope)
+		    (c-translate loop-body (+ 1 level))
+		    (c-indent (close-scope) level))
+	      level)))
 
-(defun c-translate (form &optional (level 0) nested)
+(defun c-translate (form &optional (level 1) nested)
   "Maps AST from list to C code string"
   (if (is-instruction form)
       (ecase (first form)
@@ -204,7 +205,7 @@ may denote elements of a column vector."))
 	(for-loop (c-build-for-loop form level))
 	(op-block (c-block form level)))
       (mapcar (lambda (x)
-		(c-translate x (+ 1 level) nested))
+		(c-translate x level nested))
 	      form)))
 
 (defun c-fn-def (fn-def-rep)
@@ -216,9 +217,7 @@ may denote elements of a column vector."))
 				   (t (error "Signature has invalid element ~a" x))))
 			   (fourth fn-def-rep)))
 	(arg-list (mapcar #'c-var (fifth fn-def-rep)))
-	(body (reduce-string-list
-	       (flatten
-		(c-translate (sixth fn-def-rep))))))
+	(body (flatten-to-string (c-translate (sixth fn-def-rep)))))
     (emit "~a ~a(~{~a ~a~^, ~}){~%~a~%}"
 	  return-type
 	  fn-name
