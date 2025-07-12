@@ -8,14 +8,12 @@
 
 (defun make-block (&rest ops)
   (assert (every (lambda (x)
-                   (or (is-instruction x)
+                   (or (and (is-instruction x)
+			    (not (is-special-form x)))
                        (and (consp x)
                             (every #'is-instruction x))))
                  ops))
-  (if (and (= (length ops) 1)
-              (consp (first ops))
-	      (is-rep (first ops) 'op-block))
-      (first ops)
+  (if (and (= (length ops) 1) (is-rep (first ops) 'op-block)) (first ops)
       (cons 'op-block ops)))
 
 (defun make-init (type var val)
@@ -103,3 +101,6 @@
       (and (is-rep x 'memref) (eq (second x) 'dereference))))
 
 (defun is-rep-one-of (x tag-list) (and (consp x) (member (first x) tag-list)))
+
+(defun is-special-form (x) ;; To be expanded as more special forms implemented
+  (member (first x) *special-tags*))

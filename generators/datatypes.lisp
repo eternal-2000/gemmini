@@ -43,6 +43,9 @@
 (defparameter *op-dict*
   '(comp type pointer dec assign init for-loop op-block call))
 
+(defparameter *special-tags*
+  '(for-loop if))
+
 (defparameter *fn-dict*
   '((load . 3) (fma . 5) (store . 4) (broadcast . 3) (inc . 2)))
 
