@@ -50,12 +50,12 @@ void macrokernel(int m, int n, int p, double* A_pack, double* B_pack, double* C,
   for (int j = 0; j < n; j += NR){
     int jb = MIN(NR, n - j);
     if (ldC % VEC_WIDTH != 0){ // Align C to vector register width if needed, and update
-      mk_avx_buffer(m, jb, p, A_pack, &B_pack[j * p], &C[j * ldC], ldC);
+      mk_avx_buffer_64(m, jb, p, A_pack, &B_pack[j * p], &C[j * ldC], ldC);
     } else{
       for (int i = 0; i < m; i += MR){
 	int ib = MIN(MR, m - i);
 	if (ib < MR || jb < NR){ // If block is not full, calculate with a temp buffer
-	  mk_part_buffer(ib, jb, p, &A_pack[i * p], &B_pack[j * p], &C[i + j * ldC], ldC);
+	  mk_part_buffer_64(ib, jb, p, &A_pack[i * p], &B_pack[j * p], &C[i + j * ldC], ldC);
 	} else{
 	  dgemm_kernel(p, &A_pack[i * p], &B_pack[j * p], &C[i + j * ldC], ldC);
 	}

@@ -6,6 +6,7 @@ from getPath import getPath
 def solo_bench(name: str, init_n: int, final_n: int, inc: int = 48, reps: int = 3,
                trans: str = "N", debug: bool = False) -> None:
     """
+    --------------------------------------------------
     Input
     --------------------------------------------------
     name: Name of BLAS operation
@@ -17,7 +18,7 @@ def solo_bench(name: str, init_n: int, final_n: int, inc: int = 48, reps: int = 
     debug: Enables debugging output
     --------------------------------------------------
     Output
-       
+    --------------------------------------------------
     Plots BLAS operation in Gflops/sec against size of square matrices. 
     """
 

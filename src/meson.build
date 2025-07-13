@@ -16,8 +16,7 @@ dgemm_const_sources = files(
   'dgemm.c',
   'kernels/dgemm_kernel.c',
   'gentools/packing.c',
-  'gentools/mk_part_buffer.c',
-  'gentools/mk_avx_buffer.c'
+  'gentools/buffers_64.c'
 )
 
 dgemm_lib = static_library('dgemm_internal',
