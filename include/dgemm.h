@@ -11,8 +11,8 @@
 #include<omp.h>
 
 void dgemm(char*, char*, int, int, int, double, double*, int, double*, int, double*, int);
-void proc_B(char*, char*, int, int, int, double, double*, int, double*, int, double*, int);
-void proc_A(char*, int, int, int, double*, int, double*, double*, int);
-void macrokernel(int, int, int, double*, double*, double*, int);
+void proc_B_64(char*, char*, int, int, int, double, double*, int, double*, int, double*, int);
+void proc_A_64(char*, int, int, int, double*, int, double*, double*, int);
+void macrokernel_64(int, int, int, double*, double*, double*, int);
 
 #endif

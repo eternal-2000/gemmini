@@ -15,7 +15,7 @@ sgemm_const = [
 dgemm_const_sources = files(
   'dgemm.c',
   'kernels/dgemm_kernel.c',
-  'gentools/packing.c',
+  'gentools/packing_64.c',
   'gentools/buffers_64.c'
 )
 
