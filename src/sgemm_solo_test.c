@@ -3,7 +3,7 @@
   Reports performance of the test sgemm function, without comparison to BLAS.
  */
 
-void sgemm_solo_test(char* transA, char* transB,
+void sgemm_solo_test(transOpt transA, transOpt transB,
 		     int init_n, int final_n, int inc, int reps){
   unsigned long sq;
   double gflops;
@@ -52,7 +52,11 @@ void sgemm_solo_test(char* transA, char* transB,
     best = 0.;
     for (int t = 0; t < reps; ++t){
       double start = omp_get_wtime();
-      test_sgemm(transA, transB, n, n, n, alpha, A, n, B, n, C, n);
+      test_sgemm(transA, transB,
+		 n, n, n,
+		 alpha, A, n,
+		 B, n,
+		 C, n);
       double end = omp_get_wtime();
 
       double exec_time = end - start;
@@ -76,8 +80,8 @@ int main(int argc, char** argv){
   int numargs = 7;
   argcount(numargs - 1, argc - 1);
   
-  char* transA = argv[1];
-  char* transB = argv[2];
+  transOpt transA = parseTrans(argv[1]);
+  transOpt transB = parseTrans(argv[2]);
   int init_n = atoi(argv[3]), final_n = atoi(argv[4]), inc = atoi(argv[5]), reps = atoi(argv[6]);
 
   init_n = (init_n/inc) * inc;

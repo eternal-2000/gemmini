@@ -45,6 +45,7 @@ sgemm_lib = static_library('sgemm_internal',
 shared_sources = files(
   'gentools/RandomiseM.c',
   'gentools/nextbit.c',
+  'gentools/parseTrans.c',
   'transpose/transpose.c'
 )
 

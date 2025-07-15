@@ -14,8 +14,8 @@
     --------------------------------------------------
  */
 
-void packMicroA_64(char* transA, int m, int p, double* A, int ldA, double* A_pack){
-  if (!strcmp(transA, "N")){
+void packMicroA_64(transOpt transA, int m, int p, double* A, int ldA, double* A_pack){
+  if (transA == NoTrans){
     for (int k = 0; k < p; ++k){
       for (int i = 0; i < m; ++i){
 	*A_pack++ = A[i + k * ldA];
@@ -36,7 +36,7 @@ void packMicroA_64(char* transA, int m, int p, double* A, int ldA, double* A_pac
   }
 }
 
-void packA_64(char* transA, int m, int p, double* A, int ldA, double* A_pack){
+void packA_64(transOpt transA, int m, int p, double* A, int ldA, double* A_pack){
   #pragma omp parallel for
   for (int i = 0; i < m; i += MR){
     int ib = MIN(MR, m - i);
@@ -44,8 +44,8 @@ void packA_64(char* transA, int m, int p, double* A, int ldA, double* A_pack){
   }
 }
 
-void packMicroB_64(char* transB, int p, int n, double alpha, double* B, int ldB, double* B_pack){
-  if (!strcmp(transB, "N")){
+void packMicroB_64(transOpt transB, int p, int n, double alpha, double* B, int ldB, double* B_pack){
+  if (transB == NoTrans){
     for (int k = 0; k < p; ++k){
       for (int j = 0; j < n; ++j){
 	*B_pack++ = alpha * B[k + j * ldB];
@@ -66,7 +66,7 @@ void packMicroB_64(char* transB, int p, int n, double alpha, double* B, int ldB,
   }
 }
 
-void packB_64(char* transB, int p, int n, double alpha, double* B, int ldB, double* B_pack){
+void packB_64(transOpt transB, int p, int n, double alpha, double* B, int ldB, double* B_pack){
   #pragma omp parallel for
   for (int j = 0; j < n; j += NR){
     int jb = MIN(NR, n - j);

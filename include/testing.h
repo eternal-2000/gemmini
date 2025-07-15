@@ -9,5 +9,6 @@
 #include "testgemm.h"
 #include "gentools/RandomiseM.h"
 #include "gentools/argcount.h"
+#include "gentools/parseTrans.h"
 
 #endif
