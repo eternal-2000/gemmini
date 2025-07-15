@@ -126,17 +126,18 @@ To benchmark with `Xgemm_solo_test`, the syntax is
 ./path/to/Xgemm_solo_test TransA TransB start stop step repetitions
 ```
 
-where `TransA` and `TransB` can be either `"T"` or `"N"`, indicating
-transposition, or no transposition, respectively, and the other
-arguments should be positive integers. The performance is measured by
-running the `gemm` implementation `repetitions` times and recording
-the maximum GFLOPS attained, over randomised square matrices with
-number of columns `start` to `stop` in steps `step`.
+where `TransA` and `TransB` can be either `T`, `Trans`, or `N`,
+`NoTrans`, indicating transposition, or no transposition, respectively
+(actually anything that starts with T or N will work for now), and the
+other arguments should be positive integers. The performance is
+measured by running the `gemm` implementation `repetitions` times and
+recording the maximum GFLOPS attained, over randomised square matrices
+with number of columns `start` to `stop` in steps `step`.
 
 Here's an example:
 
 ```shell
-./builddir/src/dgemm_solo_test "T" "N" 480 4800 48 3
+./builddir/src/dgemm_solo_test Trans NoTrans 480 4800 48 3
 ```
 
 will benchmark the `dgemm` variant `C += A^T B`, starting by letting
