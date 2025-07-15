@@ -8,6 +8,13 @@
   "Binds SYMS to gensyms in BODY"
   `(let ,(mapcar (lambda (s) `(,s (gensym))) syms) ,@body))
 
+(defmacro assert-all (&rest test-forms)
+  "Expands into sequential ASSERT forms on list of TEST-FORMS. Gives error on first fail"
+  `(progn ,@(mapcar
+	     (lambda (expr)
+	       `(assert ,expr))
+	     test-forms)))
+
 (defmacro ecase-str (keyform &body cases)
   "Variant of ECASE which matches string (instead of symbol) KEYFORM"
   (with-gensyms (k)

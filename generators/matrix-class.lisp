@@ -56,8 +56,8 @@
 
 (defmethod initialize-instance :after ((mat matrix) &key &allow-other-keys)
   (flet ((valid-dimension-p (x) (compose-call (or stringp posintp) x)))
-    (assert (and (valid-dimension-p (matrix-rows mat))
-		 (valid-dimension-p (matrix-columns mat))))))
+    (assert-all (valid-dimension-p (matrix-rows mat))
+		(valid-dimension-p (matrix-columns mat)))))
 
 (defmethod initialize-instance :after ((vec column-vector) &key &allow-other-keys)
   (assert (= (matrix-columns vec) 1)))
