@@ -3,9 +3,9 @@
 
 (provide :matrix-class)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; General matrix class
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass matrix ()
   ((name :initarg :name
@@ -57,7 +57,8 @@
 (defmethod initialize-instance :after ((mat matrix) &key &allow-other-keys)
   (flet ((valid-dimension-p (x) (compose-call (or stringp posintp) x)))
     (assert-all (valid-dimension-p (matrix-rows mat))
-		(valid-dimension-p (matrix-columns mat)))))
+		(valid-dimension-p (matrix-columns mat))
+		(member (matrix-float-size mat) *precisions*))))
 
 (defmethod initialize-instance :after ((vec column-vector) &key &allow-other-keys)
   (assert (= (matrix-columns vec) 1)))
@@ -65,79 +66,53 @@
 (defmethod initialize-instance :after ((vec row-vector) &key &allow-other-keys)
   (assert (= (matrix-rows vec) 1)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Matrix descriptions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defgeneric emit-desc (matrix)
-  (:documentation "Returns describe-object as string, i.e. where STREAM argument is NIL"))
-(defmethod emit-desc ((obj matrix)) (describe-object obj nil))
+  (:documentation "Returns describe-object as string, i.e. with format NIL"))
+(defmethod emit-desc ((obj matrix)) (print-object obj nil))
 
-(defmethod describe-object ((s scalar) stream)
-  (format stream "~d-bit scalar ~a"
-	  (matrix-float-size s)
-	  (matrix-name s)))
-
-(defmethod describe-object ((v row-vector) stream)
-  (format stream "~d-bit ~a-element row vector ~a"
-	  (matrix-float-size v)
-	  (matrix-columns v)
-	  (matrix-name v)))
-
-(defmethod describe-object ((v column-vector) stream)
-  (format stream "~d-bit ~a-element column vector ~a"
-	  (matrix-float-size v)
-	  (matrix-rows v)
-	  (matrix-name v)))
-
-(defmethod describe-object ((mat matrix) stream)
-  (format stream "~d-bit ~d x ~d matrix ~a"
-	  (matrix-float-size mat)
+(defmethod print-object ((mat matrix) stream)
+  (format stream "#<~s ~a[~a x ~a : ~d-bit] ~d>"
+	  (type-of mat)
+	  (if (slot-boundp mat 'name) (matrix-name mat)
+	      "(Nameless)")
 	  (matrix-rows mat)
 	  (matrix-columns mat)
-	  (matrix-name mat)))
+	  (matrix-float-size mat)
+	  (sb-kernel:get-lisp-obj-address mat)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Operation validators
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmethod print-object ((v column-vector) stream)
+  (format stream "#<~s ~a[~a : ~d-bit] ~d>"
+	  (type-of v)
+	  (if (slot-boundp v 'name) (matrix-name v)
+	      "(Nameless)")
+	  (matrix-rows v)
+	  (matrix-float-size v)
+	  (sb-kernel:get-lisp-obj-address v)))
 
-(defgeneric validate-mm (left-multiplier right-multiplier product)
-  (:documentation "Checks whether matrices can be multiplied and stored in product matrix.
-Only performs check on matrix dimensions; allows multiplication of different precisions."))
+(defmethod print-object ((v row-vector) stream)
+  (format stream "#<~s ~a[~a : ~d-bit] ~d>"
+	  (type-of v)
+	  (if (slot-boundp v 'name) (matrix-name v)
+	      "(Nameless)")
+	  (matrix-columns v)
+	  (matrix-float-size v)
+	  (sb-kernel:get-lisp-obj-address v)))
 
-(defmethod validate-mm ((left-multiplier scalar) (right-multiplier matrix) (product matrix))
-  (unless (and (equal (matrix-rows right-multiplier) (matrix-rows product))
-	       (equal (matrix-columns right-multiplier) (matrix-columns product)))
-    (error "Dimension mismatch:
-~a cannot be scaled by
-~a
-to give
-~a"
-	   (emit-desc right-multiplier)
-	   (emit-desc left-multiplier)
-	   (emit-desc product)))
-  (values))
+(defmethod print-object ((s scalar) stream)
+  (format stream "#<~s ~a[~d-bit] ~d>"
+	  (type-of s)
+	  (if (slot-boundp s 'name) (matrix-name s)
+	      "(Nameless)")
+	  (matrix-float-size s)
+	  (sb-kernel:get-lisp-obj-address s)))
 
-(defmethod validate-mm ((left-multiplier matrix) (right-multiplier scalar) (product matrix))
-  (validate-mm right-multiplier left-multiplier product))
-
-(defmethod validate-mm ((left-multiplier matrix) (right-multiplier matrix) (product matrix))
-  (unless (and (equal (matrix-rows product) (matrix-rows left-multiplier))
-	       (equal (matrix-columns product) (matrix-columns right-multiplier))
-	       (equal (matrix-columns left-multiplier) (matrix-rows right-multiplier)))
-    (error "Dimension mismatch:
-~a cannot multiply
-~a
-on the left to give
-~a"
-	   (emit-desc left-multiplier)
-	   (emit-desc right-multiplier)
-	   (emit-desc product)))
-  (values))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Matrix macro utilities
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmacro do-matrix ((element-sym row-index col-index) matrix step &body body)
   "Applies BODY to elements of MATRIX in column-major order, with step-sizes STEP:
@@ -152,7 +127,7 @@ on the left to give
 			 (range (matrix-rows ,mat) 0 ,step)))
 	       (range (matrix-columns ,mat))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmethod matrix-declare ((mat matrix) register-size)
   (let ((data-size (matrix-float-size mat)))
