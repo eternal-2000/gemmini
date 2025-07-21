@@ -40,13 +40,13 @@ making extension to new operations easier in principle.
 
 In order to construct code for a target architecture, we build an
 abstract syntax tree (AST) for that particular BLAS operation on that
-target architecture. Here is a visual example of applying vector FMAs
-to perform a rank-1 update of a matrix of doubles might look:
+target architecture. Here is a visual example of what an AST could
+look like:
 
 <p align="center">
   <img src="images/CPU_example_AST.png" alt="CPU_AST" width="500"/>
   <br>
-  <em>Figure 1: This is an example showing how part of an AST would look for a CPU implementation of a 4 x 4 `dgemm` microkernel. This can later get translated into AVX2 intrinsics.</em>
+  <em>Figure 1: This is an example showing how part of an AST would look for a CPU implementation of a 4 x 4 dgemm microkernel. This particular section shows how vector FMAs should be executed to perform a rank-1 update of a 4 x 4 microtile. Matrices are packed by 4 elements into a YMM register, and walked over in column-major order. This can later get translated into AVX2 intrinsics.</em>
 </p>
 
 Currently, the user can invoke the code generation process by calling
