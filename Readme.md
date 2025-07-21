@@ -36,7 +36,18 @@ architecture (e.g. an implementation of GEMM in C for a CPU with
 from any particular representation in a given language is intended to
 allow easy extension to different architectures, or different
 languages, and handle different float precisions easily, as well as
-making extension to new operations easier in principle. 
+making extension to new operations easier in principle.
+
+In order to construct code for a target architecture, we build an
+abstract syntax tree (AST) for that particular BLAS operation on that
+target architecture. Here is a visual example of applying vector FMAs
+to perform a rank-1 update of a matrix of doubles might look:
+
+<p align="center">
+  <img src="images/CPU_example_AST.png" alt="CPU_AST" width="500"/>
+  <br>
+  <em>Figure 1: This is a demo image showing how part of an AST might look for a CPU implementation of a `dgemm` microkernel. This will later get turned into AVX2 intrinsics.</em>
+</p>
 
 Currently, the user can invoke the code generation process by calling
 a simple Bash script in the `generators` directory: `build.sh`. This
