@@ -46,7 +46,7 @@ to perform a rank-1 update of a matrix of doubles might look:
 <p align="center">
   <img src="images/CPU_example_AST.png" alt="CPU_AST" width="500"/>
   <br>
-  <em>Figure 1: This is a demo image showing how part of an AST might look for a CPU implementation of a `dgemm` microkernel. This will later get turned into AVX2 intrinsics.</em>
+  <em>Figure 1: This is an example showing how part of an AST would look for a CPU implementation of a 4 x 4 `dgemm` microkernel. This can later get translated into AVX2 intrinsics.</em>
 </p>
 
 Currently, the user can invoke the code generation process by calling
