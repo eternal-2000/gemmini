@@ -1,4 +1,3 @@
-(require :microkernel-gen)
 (require :header-gen)
 (require :uiop)
 
@@ -12,30 +11,35 @@
                           :if-does-not-exist :create)
     (format stream "~A~%" body))))
 
+(defun make-blas-op (blas-sym)
+  (ecase-str blas-sym
+      ("gemm" #'make-gemm)))
+
 (defun write-blas ()
   "Writes microkernels to files. To be updated as BLAS and language functionalities are added"
   (let* ((raw-args (uiop:command-line-arguments))
-	 (args (if (and raw-args (string= (first raw-args) "--"))
-		   (rest raw-args)
+	 (args (if (and raw-args (string= (first raw-args) "--")) (rest raw-args)
 		   raw-args))
-	 (blas-op (first args))
+	 (blas-class (make-blas-op (first args)))
 	 (mr (parse-integer (second args)))
 	 (nr (parse-integer (third args)))
-	 (float-size (parse-integer (fourth args)))
-	 (register-size (parse-integer (fifth args)))
-	 (mk-fn-def-rep (make-mk-gemm (make-matrix "C" mr nr float-size)
-				      (make-column-vector "A" mr float-size)
-				      (make-row-vector "B" nr float-size)
-				      :register-size register-size)))
+	 (input-precision (parse-integer (fourth args)))
+	 (target-precision input-precision) ;; To be updated
+	 (register-width (parse-integer (fifth args)))
+	 (blas-op (funcall blas-class
+			   input-precision
+			   target-precision
+			   (list 4096 128 256 mr nr))) ;; Temporary parameters - to be updated
+	 (mk-name (microkernel-name blas-op)))
     (cond ((not (= (mod mr 4) 0))
 	   (error "Number of rows in microtile should be multiple of 4 (for now)"))
 	  ((not (and (> mr 0) (> nr 0)))
 	   (error "Negative number passed as dimension of microtile"))
-	  (t (write-c-file (mk-name blas-op :float-size float-size)
+	  (t (write-c-file mk-name
 			   (cat (c-include "immintrin")
-				(c-fn-def mk-fn-def-rep))
+				(c-fn-def (make-avx-microkernel blas-op register-width)))
 			   "../src/kernels/")
-	     (write-c-file (mk-name blas-op :float-size float-size)
-			   (mk-header blas-op mk-fn-def-rep :float-size float-size)
+	     (write-c-file mk-name
+			   (mk-header blas-op register-width)
 			   "../include/kernels/"
 			   :filetype 'H)))))

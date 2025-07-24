@@ -1,12 +1,11 @@
-(require :representation)
-(require :gen-utils)
-(require :matrix-class)
+(require :avx-ops)
+(require :gemm-class)
 
 (provide :c-utils)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; C syntax - general
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun close-statement () (emit ";"))
 
@@ -27,11 +26,9 @@
 		  (indent-string x level))
 		lines))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; BLAS-specific C notation
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defmethod column-stride ((mat matrix)) (emit "ld~a" (matrix-name mat)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmethod matrix-entry ((mat matrix) row column)
   (let ((mat-name (matrix-name mat)) (stride (column-stride mat)))
@@ -67,9 +64,9 @@ may denote elements of a column vector."))
   (assert (= row 0))
   (emit "~a_~a" (string-downcase (matrix-name mat)) column))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; From AST IR to C
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun c-comparison (comp-rep)
   (let ((x (c-var (third comp-rep)))
@@ -180,7 +177,7 @@ may denote elements of a column vector."))
 	(stop-cond (fifth loop-rep))
 	(update (sixth loop-rep))
 	(loop-body (seventh loop-rep)))
-    (c-indent (emit "for (~a ~a = ~a; ~a; ~a)~a~%~a~%~a"
+    (c-indent (emit "for (~a ~a = ~a; ~a; ~a)~a~a~a"
 		    (c-type type)
 		    (c-var index)
 		    init-value
@@ -234,9 +231,9 @@ may denote elements of a column vector."))
 			   (fourth fn-def-rep))))
     (emit "~a ~a(~{~a~^, ~});" return-type fn-name signature)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Headers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun def-directive (variable &optional value)
   (let ((rval (if value value "")))
@@ -262,9 +259,9 @@ may denote elements of a column vector."))
      file-body (line-break)
      (c-directive "endif"))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; AVX conventions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun avx-intrinsic-op (op data-size register-size)
   (let ((prefix (cond ((= register-size *ymm-size*) *avx2-prefix*)

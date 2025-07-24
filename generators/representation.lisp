@@ -2,9 +2,9 @@
 
 (provide :representation)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Intermediate representations
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun make-block (&rest ops)
   (assert (every (lambda (x)
@@ -89,11 +89,60 @@
 		  (every #'is-instruction body)))
   (list 'for-loop type index init-value stop-cond update body))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Genops:
+;;;;
+;;;; A generic operation (genop) is defined here as a list, tagged
+;;;; with GENOP, which contains the minimal amount of information
+;;;; needed such that if given a device architecture, it could be
+;;;; efficiently implemented. It can be thought of as a kind of 'lazy'
+;;;; representation in the sense that it describes what to do, but not
+;;;; how to do it yet; we defer the specific details until we are
+;;;; forced to choose a specific architecture.
+;;;;
+;;;; A genseq is a sequence of genops (to be implemented) for
+;;;; notational convenience.
+;;;;
+;;;; Gendef will denote a generic definition of a function.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun make-gendef (fn-name inputs targets &rest body)
+  (list :gendef fn-name
+	:inputs (demand-list inputs)
+	:targets (demand-list targets)
+	:body (make-genseq body)))
+
+(defun make-genseq (genops) ;; Placeholder definition for now
+  (mapcan (lambda (x)
+	    (apply #'make-genop x))
+	  genops))
+
+(defun expand-genseq (genseq) ;; Placeholder definition for now
+  (apply #'make-genop
+	 ((lambda (x)
+	   (list (second x)
+		 (getf x :inputs)
+		 (getf x :target)))
+	 genseq)))
+
+(defun make-genop (name &optional inputs target)
+  (list 'genop name
+	:inputs (demand-list inputs)
+	:target (demand-list target)))
+
+(defun demand-list (x)
+  (if (listp x) x (list x)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Identifying representations
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun is-rep (x tag) (and (consp x) (eq (first x) tag)))
+
+(defun is-genop (x) (is-rep x 'genop))
+
+(defun is-genseq (x) (is-rep x 'genseq))
 
 (defun is-instruction (x) (is-rep-one-of x *op-dict*))
 

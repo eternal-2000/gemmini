@@ -59,7 +59,7 @@ if blis_comp
   ) + shared_sources
 
   executable('blis_perf',
-             ['test_performance.c', 'test_dgemm.c'] + shared_sources,
+             ['test_performance.c', 'test_dgemm.c', 'gentools/argcount.c'] + shared_sources,
              link_with: dgemm_lib,
              include_directories: inc_dir,
              dependencies: blis_dep

@@ -1,8 +1,8 @@
 (provide :macro-utils)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; General macro utilities
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmacro with-gensyms (syms &body body)
   "Binds SYMS to gensyms in BODY"
@@ -22,10 +22,13 @@
        (cond ,@(mapcar (lambda (c)
 			 `((string= ,k ,(first c)) ,@(rest c)))
 		       cases)
-	     (t (error "~S fell through ECASE-STR expression. Wanted one of ~{~S~^, ~}"
+	     (t (error "~S fell through ECASE-STR expression.
+ Wanted one of ~{~S~^, ~}"
 		       ,k ',(mapcar #'first cases)))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Function composition
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmacro compose-call (expr args)
   "Calls (COMPOSE (EXPR)) on ARGS"

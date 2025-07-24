@@ -4,7 +4,7 @@
 (provide :matrix-class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Matrix properties
+;;;; Special matrix properties
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (deftype symmetry-type ()
@@ -48,7 +48,7 @@
 	     :documentation
 	      "Can be SYMMETRIC, HERMITIAN, ANTISYMMETRIC, ANTIHERMITIAN, or NIL.")
    (triangular :initarg :symmetric
-	       :reader matrix-triangular?
+	       :reader matrix-triangular
 	       :initform nil
 	       :type triangular-type
 	       :documentation
@@ -56,17 +56,23 @@
   (:documentation
    "Class of matrices with entries floats of fixed precision, given in bits."))
 
-(defclass column-vector (matrix) ()
+(defclass vector-mixin (matrix) ()
+  (:documentation
+   "Mixin intended to be a superclass of COLUMN-VECTOR and ROW-VECTOR, for convenience."))
+
+(defclass column-vector (vector-mixin) ()
   (:documentation
    "Subclass of MATRIX which has exactly 1 column."))
 
-(defclass row-vector (matrix) ()
+(defclass row-vector (vector-mixin) ()
   (:documentation
    "Subclass of MATRIX which has exactly 1 row."))
 
 (defclass scalar (column-vector row-vector) ()
   (:documentation
    "Subclass of COLUMN-VECTOR and ROW-VECTOR, i.e. MATRIX with exactly 1 entry."))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun make-matrix (name rows columns float-size)
   (make-instance 'matrix :name (string name)
@@ -95,11 +101,11 @@
 		(valid-dimension-p (matrix-columns mat))
 		(member (matrix-float-size mat) *precisions*))))
 
-(defmethod initialize-instance :after ((vec column-vector) &key)
-  (assert (= (matrix-columns vec) 1)))
+(defmethod initialize-instance :after ((v column-vector) &key)
+  (setf (slot-value v 'columns) 1))
 
-(defmethod initialize-instance :after ((vec row-vector) &key)
-  (assert (= (matrix-rows vec) 1)))
+(defmethod initialize-instance :after ((v row-vector) &key)
+  (setf (slot-value v 'rows) 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Matrix descriptions: allows clearer depictions of AST operations
@@ -110,40 +116,36 @@
 (defmethod emit-desc ((obj matrix)) (print-object obj nil))
 
 (defmethod print-object ((mat matrix) stream)
-  (format stream "#<~s ~a[~a x ~a : ~d-bit] {~x}>"
+  (format stream "#<~s ~a[~a x ~a : ~d-bit]>"
 	  (type-of mat)
 	  (if (slot-boundp mat 'name) (matrix-name mat)
 	      "(Nameless)")
 	  (matrix-rows mat)
 	  (matrix-columns mat)
-	  (matrix-float-size mat)
-	  (sb-kernel:get-lisp-obj-address mat)))
+	  (matrix-float-size mat)))
 
 (defmethod print-object ((v column-vector) stream)
-  (format stream "#<~s ~a[~a : ~d-bit] {~x}>"
+  (format stream "#<~s ~a[~a : ~d-bit]>"
 	  (type-of v)
 	  (if (slot-boundp v 'name) (matrix-name v)
 	      "(Nameless)")
 	  (matrix-rows v)
-	  (matrix-float-size v)
-	  (sb-kernel:get-lisp-obj-address v)))
+	  (matrix-float-size v)))
 
 (defmethod print-object ((v row-vector) stream)
-  (format stream "#<~s ~a[~a : ~d-bit] {~x}>"
+  (format stream "#<~s ~a[~a : ~d-bit]>"
 	  (type-of v)
 	  (if (slot-boundp v 'name) (matrix-name v)
 	      "(Nameless)")
 	  (matrix-columns v)
-	  (matrix-float-size v)
-	  (sb-kernel:get-lisp-obj-address v)))
+	  (matrix-float-size v)))
 
 (defmethod print-object ((s scalar) stream)
-  (format stream "#<~s ~a[~d-bit] {~x}>"
+  (format stream "#<~s ~a[~d-bit]>"
 	  (type-of s)
 	  (if (slot-boundp s 'name) (matrix-name s)
 	      "(Nameless)")
-	  (matrix-float-size s)
-	  (sb-kernel:get-lisp-obj-address s)))
+	  (matrix-float-size s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Matrix macro utilities
@@ -163,134 +165,10 @@
 	       (range (matrix-columns ,mat))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Matrix operations: used to build ASTs for operations on matrix objects.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Declaring variables
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defgeneric matrix-declare (obj register-width)
+(defgeneric column-stride (obj)
   (:documentation
-   "Declares matrix-object variable of OBJ for use in vector register with REGISTER-WIDTH."))
-
-(defmethod matrix-declare ((mat matrix) register-width)
-  (let ((data-size (matrix-float-size mat)))
-    (with-matrix (a i j) mat (/ register-width data-size)
-      (make-dec (make-type 'packed-float data-size register-width)
-		(make-var 'matrix-element a i j)))))
-
-(defmethod matrix-declare ((v row-vector) register-width)
-  (let ((data-size (matrix-float-size v)))
-    (make-dec (make-type 'packed-float data-size register-width)
-	      (make-var 'matrix-element v 0 "j"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Loading, initialising
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defmethod matrix-init ((mat matrix) register-width)
-  (let ((data-size (matrix-float-size mat)))
-    (with-matrix (a i j) mat (/ register-width data-size)
-      (make-init (make-type 'packed-float data-size register-width)
-		 (make-var 'matrix-element a i j)
-		 (make-call 'load
-			    (make-memref 'address a i j)
-			    data-size register-width)))))
-
-(defgeneric matrix-load (obj register-width)
-  (:documentation
-   "Loads matrix object into registers of width REGISTER-WIDTH. Specialises to a single broadcast operation for ROW-VECTOR objects."))
-
-(defmethod matrix-load ((mat matrix) register-width)
-  (let ((data-size (matrix-float-size mat)))
-    (with-matrix (a i j) mat (/ register-width data-size)
-      (make-assign (make-var 'matrix-element a i j)
-		   (make-call 'load
-			      (make-memref 'address a i j)
-			      data-size register-width)))))
-
-(defmethod matrix-load ((v row-vector) register-width)
-  (with-matrix (a k j) v 1
-    (declare (ignore k))
-    (let ((data-size (matrix-float-size a)))
-      (make-assign (make-var 'matrix-element a 0 "j")
-		   (make-call 'broadcast
-			      (make-memref 'address a 0 j)
-			      data-size register-width)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Storing
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defmethod matrix-store ((mat matrix) register-width)
-  (let ((data-size (matrix-float-size mat)))
-    (with-matrix (a i j) mat (/ register-width data-size)
-      (make-call 'store
-		 (make-memref 'address a i j)
-		 (make-var 'matrix-element a i j)
-		 data-size register-width))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Fused multiply-add operations
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defmethod matrix-fma ((block-matrix matrix) (col-vec column-vector) (row-vec row-vector)
-		       register-width &key (column-index "j"))
-  (let ((data-size (matrix-float-size block-matrix)))
-    (with-matrix (c i j) block-matrix (/ register-width data-size)
-      (make-assign (make-var 'matrix-element c i j)
-		   (make-call 'fma
-			      (make-var 'matrix-element col-vec i 0)
-			      (make-var 'matrix-element row-vec 0 column-index)
-			      (make-var 'matrix-element c i j)
-			      data-size register-width)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Array pointer operations
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defmethod matrix-pointer-inc ((mat matrix) increment)
-  (make-call 'inc (make-var 'simple mat) increment))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Microkernel blocks
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defmethod gemm-update-block ((block-matrix matrix) (col-vec column-vector) (row-vec row-vector)
-			      register-width &key (column-index "j"))
-  (make-block
-    (matrix-load col-vec register-width)
-    (interleave-lists (matrix-load row-vec register-width)
-		      (matrix-fma block-matrix col-vec row-vec register-width
-				  :column-index column-index)
-		      (/ (* (matrix-rows block-matrix)
-			    (matrix-float-size block-matrix))
-			 register-width))
-    (matrix-pointer-inc col-vec (matrix-rows col-vec))
-    (matrix-pointer-inc row-vec (matrix-columns row-vec))))
-
-(defmethod gemm-update-loop ((block-matrix matrix) (col-vec column-vector) (row-vec row-vector)
-			     register-width
-			     &key (loop-index "k") (loop-length "p") (column-index "j"))
-  (let ((idx (make-var 'simple loop-index)))
-	(make-loop *index-type*
-		   idx
-		   0
-		   (make-comp 'L
-			      idx
-			      (make-var 'simple loop-length))
-		   (make-call 'inc idx 1)
-		   (gemm-update-block block-matrix col-vec row-vec register-width
-				      :column-index column-index))))
-
-(defmethod gemm-microkernel ((block-matrix matrix) (col-vec column-vector) (row-vec row-vector)
-			     register-width
-			     &key (loop-index "k") (loop-length "p") (column-index "j"))
-  (list
-   (make-block (matrix-init block-matrix register-width)
-	       (matrix-declare col-vec register-width)
-	       (matrix-declare row-vec register-width))
-   (gemm-update-loop block-matrix col-vec row-vec register-width
-		     :loop-index loop-index :loop-length loop-length :column-index column-index)
-   (make-block (matrix-store block-matrix register-width))))
+   "Denotes column-stride of OBJ X as string ldX (leading dimension of X).
+Accepts strings, and objects of MATRIX class."))
+(defmethod column-stride ((str string)) (cat "ld" str))
+(defmethod column-stride ((mat matrix)) (emit "ld~a" (matrix-name mat)))

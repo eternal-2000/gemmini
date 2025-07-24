@@ -2,9 +2,9 @@
 (require :macro-utils)
 (provide :gen-utils)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; General utilities
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun range (end &optional (start 0) (step 1))
   (if (< start end)
@@ -25,17 +25,29 @@ Creates new list by taking one element of a, then SPACING elements of b,
 					   (append accumulator (list (first b))))))))
     (interleave-iterator a b 0 initial-list)))
 
+(defun group (x n)
+  (assert (posintp n))
+  (labels ((recurse (x &optional accumulator)
+	     (let ((rem (nthcdr n x)))
+	       (if (consp rem) (recurse rem (cons (subseq x 0 n) accumulator))
+		   (nreverse (cons x accumulator))))))
+    (if x (recurse x) nil)))
+
 (defun flatten (x)
-  (labels ((recurse (x accumulator)
+  (labels ((recurse (x &optional accumulator)
 	     (cond ((null x) accumulator)
 		   ((atom x) (cons x accumulator))
 		   (t (recurse (first x)
 			       (recurse (rest x) accumulator))))))
-    (recurse x nil)))
+    (recurse x)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun mapzip (fn-list arg-list) (mapcar #'funcall fn-list arg-list))
+
+(defun total-length (&rest lists) (reduce #'+ (mapcar #'length lists)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Type and value checking 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun positivep (x) (> x 0))
 
@@ -43,9 +55,9 @@ Creates new list by taking one element of a, then SPACING elements of b,
 
 (defun every-typep (list type) (every (lambda (x) (typep x type)) list))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Strings and symbols
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun emit (format-pattern &rest args) (apply #'format nil format-pattern args))
 

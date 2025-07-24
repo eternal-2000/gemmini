@@ -44,7 +44,7 @@ target architecture. Here is a visual example of what an AST could
 look like:
 
 <p align="center">
-  <img src="images/CPU_example_AST.png" alt="CPU_AST" width="500"/>
+  <img src="images/CPU_example_AST.png" alt="CPU_AST" width="600"/>
   <br>
   <em>Figure 1: This is an example showing how part of an AST would look for a CPU implementation of a 4 x 4 dgemm microkernel. This particular section shows how vector FMAs should be executed to perform a rank-1 update of a 4 x 4 microtile. Matrices are packed by 4 elements into a YMM register, and walked over in column-major order. This can later get translated into AVX2 intrinsics.</em>
 </p>
