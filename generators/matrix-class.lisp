@@ -41,13 +41,13 @@
 	       :type (member *precisions*)
 	       :documentation
 	       "Number of bits of an element of the matrix.")
-   (symmetry :initarg :symmetric
+   (symmetry :initarg :symmetry
 	     :reader matrix-symmetry
 	     :initform nil
 	     :type symmetry-type
 	     :documentation
 	      "Can be SYMMETRIC, HERMITIAN, ANTISYMMETRIC, ANTIHERMITIAN, or NIL.")
-   (triangular :initarg :symmetric
+   (triangular :initarg :triangular
 	       :reader matrix-triangular
 	       :initform nil
 	       :type triangular-type
