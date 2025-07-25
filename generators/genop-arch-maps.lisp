@@ -53,13 +53,12 @@
 	     (target (getf genop :target)))
 	 (mapcar (lambda (str)
 		   (make-var 'simple str))
-		 (append (list loop-index)
-			 (get-matrix-names inputs)
-			 (interleave-lists (get-matrix-names target)
-					   (mapcar (lambda (obj)
-						     (column-stride obj))
-						   target)
-					   1))))))))
+		 (interleave (get-matrix-names target)
+			     (mapcar (lambda (obj)
+				       (column-stride obj))
+				     target)
+			     :initial-list (cons loop-index
+						 (get-matrix-names inputs)))))))))
 
 (defun genseq-avx (x register-width) ;; Placeholder definition before
 				     ;; genseq properly handled
@@ -103,11 +102,11 @@
 	(row-vec (second inputs)))
     (make-block
      (matrix-load col-vec register-width)
-     (interleave-lists (matrix-load row-vec register-width)
-		       (matrix-fma target col-vec row-vec register-width)
-		       (/ (* (matrix-rows col-vec)
-			     (matrix-float-size target))
-			  register-width))
+     (interleave (matrix-load row-vec register-width)
+		 (matrix-fma target col-vec row-vec register-width)
+		 :spacing (/ (* (matrix-rows col-vec)
+				(matrix-float-size target))
+			     register-width))
      (matrix-pointer-inc col-vec (matrix-rows col-vec))
      (matrix-pointer-inc row-vec (matrix-columns row-vec)))))
 

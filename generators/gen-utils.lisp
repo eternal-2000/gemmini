@@ -10,20 +10,18 @@
   (if (< start end)
       (cons start (range end (+ step start) step))))
   
-(defun interleave-lists (a b spacing &optional initial-list)
+(defun interleave (a b &key (spacing 1) (initial-list nil))
   "Interleaves elements of a and b with a given spacing and appends to optional initial list.
 Creates new list by taking one element of a, then SPACING elements of b,
  and iterating until all elements of a and b have been used."
-  (labels ((interleave-iterator (a b count-b accumulator)
-             (cond ((and (null a) (null b)) accumulator)
-		   ((null b) (append accumulator a))
-		   ((null a) (append accumulator b))
-		   ((= count-b 0)
-		    (interleave-iterator (rest a) b spacing
-					 (append accumulator (list (first a)))))
-		   (t (interleave-iterator a (rest b) (- count-b 1)
-					   (append accumulator (list (first b))))))))
-    (interleave-iterator a b 0 initial-list)))
+  (labels ((alternate-append (x y accumulator)
+             (cond ((and (null x) (null y)) accumulator)
+		   ((null y) (append accumulator x))
+		   ((null x) (append accumulator y))
+		   (t (alternate-append (rest x) (rest y)
+					(append accumulator (cons (first x)
+								  (first y))))))))
+    (alternate-append a (group b spacing) initial-list)))
 
 (defun group (x n)
   (assert (posintp n))

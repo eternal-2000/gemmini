@@ -103,7 +103,7 @@
 
 (defgeneric microkernel-signature (op)
   (:documentation
-   "Makes abstract list of types which should be passed as the OP microkernel signature."))
+   "Abstract list of types which should be passed as OP microkernel signature."))
 
 (defmethod microkernel-signature ((op gemm))
   (let ((inpre-pointer (make-pointer 'float (gemm-input-precision op)))
@@ -119,16 +119,15 @@
   (let ((loop-length "p"))
     (mapcar (lambda (x)
 	      (make-var 'simple x))
-	    (flatten (list loop-length
-			   (gemm-input-matrices op)
-			   (interleave-lists (gemm-target-matrices op)
-					     (mapcar (lambda (matrix)
-						       (column-stride matrix))
-						     (gemm-target-matrices op))
-					     1))))))
+	    (interleave (gemm-target-matrices op)
+			(mapcar (lambda (matrix)
+				  (column-stride matrix))
+				(gemm-target-matrices op))
+			:initial-list (cons loop-length
+					    (gemm-input-matrices op))))))
 
 (defgeneric form-input-matrices (op)
-  (:documentation "Takes names of input args in GEMM object, maps onto MATRIX objects.
+  (:documentation "Maps names of input args in GEMM object onto MATRIX objects.
 Currently only implemented for microkernel-level code."))
 
 (defmethod form-input-matrices ((op gemm))
@@ -142,7 +141,7 @@ Currently only implemented for microkernel-level code."))
 	    (gemm-input-matrices op))))
 
 (defgeneric form-target-matrices (op)
-  (:documentation "Takes names of target args in GEMM object, maps onto MATRIX objects.
+  (:documentation "Maps names of target args in GEMM object onto MATRIX objects.
 Currently only implemented for microkernel-level code."))
 
 (defmethod form-target-matrices ((op gemm))
