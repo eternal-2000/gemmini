@@ -8,27 +8,29 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defparameter *gemm-variation-argcounts*
-  `((default . 5)))
+  `((default . 5) (strassen . 6)))
 
 (defclass gemm ()
   ((input-matrices :initarg :input-matrices
 		   :reader gemm-input-matrices
 		   :type list
 		   :documentation
-		   "A list of the names of matrices which are strict inputs.")
+		   "List of the names of matrices which are strict inputs.")
    (input-scalars :initarg :input-scalars
 		  :reader gemm-input-scalars
 		  :type list
-		  :documentation "A list of the names of the scalar inputs.")
+		  :documentation
+		  "List of the names of the scalar inputs.")
    (input-precision :initarg :input-precision
 		    :reader gemm-input-precision
 		    :type integer
-		    :documentation "Size in bits of the floats which are entries of the inputs.")
+		    :documentation
+		    "Size in bits of the floats which are entries of the inputs.")
    (target-matrices :initarg :target-matrices
 		    :reader gemm-target-matrices
 		    :type list
 		    :documentation
-		    "A list of the names of matrices which are to be updated")
+		    "List of names of matrices which are to be updated.")
    (target-precision :initarg :target-precision
 		     :reader gemm-target-precision
 		     :type integer
@@ -43,15 +45,19 @@
 	      :reader gemm-variation
 	      :initform 'default
 	      :type symbol
-	      :documentation "The algorithm used to implement the gemm operation."))
-  (:documentation "The class of all GEMM operations, i.e. of the form C ← αAB + βC."))
+	      :documentation
+	      "Algorithm used to implement the gemm operation."))
+  (:documentation
+   "Class of all gemm operations, i.e. of the form C ← αAB + βC."))
 
 (defun make-gemm (input-precision target-precision loop-parameters
 		  &optional (variation 'default))
   (make-instance 'gemm :input-matrices '("A" "B")
 		       :input-scalars '("alpha" "beta")
 		       :input-precision input-precision
-		       :target-matrices '("C")
+		       :target-matrices (ecase variation
+					  (default '("C"))
+					  (strassen '("C" "D")))
 		       :target-precision target-precision
 		       :loop-parameters loop-parameters
 		       :variation variation))
@@ -96,7 +102,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defgeneric microkernel-name (op)
-  (:documentation "Name of microkernel used by OP."))
+  (:documentation
+   "Name of microkernel used by OP."))
 
 (defmethod microkernel-name ((op gemm))
   (cat (op-name op) "_kernel"))
@@ -115,7 +122,7 @@
   (:documentation
    "Makes abstract list of arguments which are required by OP microkernel."))
 
-(defmethod microkernel-arg-list (op)
+(defmethod microkernel-arg-list ((op gemm))
   (let ((loop-length "p"))
     (mapcar (lambda (x)
 	      (make-var 'simple x))
@@ -127,7 +134,8 @@
 					    (gemm-input-matrices op))))))
 
 (defgeneric form-input-matrices (op)
-  (:documentation "Maps names of input args in GEMM object onto MATRIX objects.
+  (:documentation
+   "Maps names of input args in GEMM object onto MATRIX objects.
 Currently only implemented for microkernel-level code."))
 
 (defmethod form-input-matrices ((op gemm))
@@ -141,7 +149,8 @@ Currently only implemented for microkernel-level code."))
 	    (gemm-input-matrices op))))
 
 (defgeneric form-target-matrices (op)
-  (:documentation "Maps names of target args in GEMM object onto MATRIX objects.
+  (:documentation
+   "Maps names of target args in GEMM object onto MATRIX objects.
 Currently only implemented for microkernel-level code."))
 
 (defmethod form-target-matrices ((op gemm))
@@ -168,7 +177,7 @@ Currently only implemented for microkernel-level code."))
     (make-gendef (microkernel-name op)
 		 inputs
 		 targets
-		 (mapcan (lambda (x)
+		 (mapcar (lambda (x)
 			   (list 'outer-product inputs x))
 			 targets))))
 

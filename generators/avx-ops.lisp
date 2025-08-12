@@ -11,7 +11,7 @@
 
 (defgeneric matrix-declare (obj register-width)
   (:documentation
-   "Declares matrix-object variable of OBJ for use in vector register with REGISTER-WIDTH."))
+   "Declares matrix object OBJ for vector register with REGISTER-WIDTH."))
 
 (defmethod matrix-declare ((mat matrix) register-width)
   (let ((data-size (matrix-float-size mat)))
@@ -39,7 +39,8 @@
 
 (defgeneric matrix-load (obj register-width)
   (:documentation
-   "Loads matrix object into registers of width REGISTER-WIDTH. Specialises to a single broadcast operation for ROW-VECTOR objects."))
+   "Loads matrix object into registers of width REGISTER-WIDTH.
+ Specialises to a single broadcast operation for ROW-VECTOR objects."))
 
 (defmethod matrix-load ((mat matrix) register-width)
   (let ((data-size (matrix-float-size mat)))

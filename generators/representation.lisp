@@ -110,29 +110,24 @@
   (list :gendef fn-name
 	:inputs (demand-list inputs)
 	:targets (demand-list targets)
-	:body (make-genseq body)))
+	:body (apply #'make-genseq body)))
 
-(defun make-genseq (genops) ;; Placeholder definition for now
-  (mapcan (lambda (x)
+(defun make-genseq (genops)
+  (cons 'genseq genops))
+
+(defun expand-genseq (genseq)
+  (mapcar (lambda (x)
 	    (apply #'make-genop x))
-	  genops))
-
-(defun expand-genseq (genseq) ;; Placeholder definition for now
-  (apply #'make-genop
-	 ((lambda (x)
-	   (list (second x)
-		 (getf x :inputs)
-		 (getf x :target)))
-	 genseq)))
+	 (rest genseq)))
 
 (defun make-genop (name &optional inputs target)
   (list 'genop name
 	:inputs (demand-list inputs)
-	:target (demand-list target)))
+	:target target))
 
 (defun demand-list (x)
-  (if (listp x) x (list x)))
-
+  (if (listp x) x
+      (list x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Identifying representations
@@ -143,6 +138,8 @@
 (defun is-genop (x) (is-rep x 'genop))
 
 (defun is-genseq (x) (is-rep x 'genseq))
+
+(defun is-genop-dag (x) (is-rep x 'genop-dag))
 
 (defun is-instruction (x) (is-rep-one-of x *op-dict*))
 

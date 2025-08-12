@@ -6,6 +6,7 @@
 	       (:file "representation")
 	       (:file "matrix-class")
 	       (:file "avx-ops")
+	       (:file "compdag")
 	       (:file "genop-arch-maps")
 	       (:file "gemm-class")
 	       (:file "c-utils")

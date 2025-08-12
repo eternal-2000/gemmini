@@ -22,7 +22,7 @@
 	 :reader matrix-name
 	 :type (or null string)
 	 :documentation
-	 "Symbolic name of the matrix object.")
+	 "Name of the matrix object.")
    (rows :initarg :rows
 	 :reader matrix-rows
 	 :initform 1
@@ -52,7 +52,7 @@
 	       :initform nil
 	       :type triangular-type
 	       :documentation
-	       "Can be one of 4 values: UPPER, LOWER, DIAGONAL, or NIL."))
+	       "Can be UPPER, LOWER, DIAGONAL, or NIL."))
   (:documentation
    "Class of matrices with entries floats of fixed precision, given in bits."))
 
@@ -172,3 +172,11 @@
 Accepts strings, and objects of MATRIX class."))
 (defmethod column-stride ((str string)) (cat "ld" str))
 (defmethod column-stride ((mat matrix)) (emit "ld~a" (matrix-name mat)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defgeneric matrix-type (obj)
+  (:documentation
+   "The type which should be associated with matrix object OBJ."))
+(defmethod matrix-type ((matrix matrix))
+  (make-pointer 'float (matrix-float-size matrix)))
