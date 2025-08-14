@@ -87,9 +87,13 @@
 			       (ecase tarpre
 				 (32 "s")
 				 (64 "d"))
-			       (error "Mixed precision not implemented yet"))))
-    (cat precision-prefix
-	 (string-downcase (class-name (class-of op))))))
+			       (error "Mixed precision not implemented yet")))
+	 (variation-prefix (unless (eq (gemm-variation op) 'default)
+			     (string-downcase (subseq (string (gemm-variation op)) 0 2)))))
+    (let ((name (cat precision-prefix
+		     (string-downcase (class-name (class-of op))))))
+      (if variation-prefix (cat variation-prefix name)
+	  name))))
 
 (defmethod print-object ((op gemm) stream)
   (format stream "#<~s ~a [~{~d~^, ~}]>"
