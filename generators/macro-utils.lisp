@@ -39,10 +39,12 @@
   `#',(build-recurse expr))
 
 (defun build-recurse (expr)
+  "Helper function for BUILD-CALL function"
   (if (or (atom expr) (eq (first expr) 'lambda)) expr
       (build-call (first expr) (rest expr))))
 
 (defun build-call (op fnlist)
+  "Helper function for COMPOSE macro"
   (with-gensyms (g)
     `(lambda (,g)
        (,op ,@(mapcar (lambda (f)

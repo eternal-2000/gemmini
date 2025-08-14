@@ -52,6 +52,10 @@
 
 (defun make-gemm (input-precision target-precision loop-parameters
 		  &optional (variation 'default))
+  "Constructs object of GEMM class.
+Matrices A, B have INPUT-PRECISION, matrix C has TARGET-PRECISION.
+LOOP-PARAMETERS are step sizes of loops around microkernel.
+Optional VARIATION argument determines implementation, e.g. Strassen's algorithm."
   (make-instance 'gemm :input-matrices '("A" "B")
 		       :input-scalars '("alpha" "beta")
 		       :input-precision input-precision
@@ -190,6 +194,10 @@ Currently only implemented for microkernel-level code."))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Mapping genops to architecture-specific ASTs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defgeneric make-avx-microkernel (op)
+  (:documentation
+   "Constructs microkernel AST for OP in registers of REGISTER-WIDTH."))
 
 (defmethod make-avx-microkernel ((op gemm) register-width)
   (gendef-avx (make-abstract-microkernel op) register-width))

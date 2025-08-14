@@ -3,13 +3,16 @@
 Gemmini is an early stage, experimental approach to the implementation
 of the level-3 BLAS.  Gemmini aims to instantiate a version of the
 level-3 BLAS operations, specialised to a system's specific
-architecture. It does this by generating code automatically from a
-high-level abstract representation of each BLAS operation.
+architecture, in such a way that we can work towards easily composing
+operations together in an efficient way. It generates code
+automatically from a high-level abstract representation of each BLAS
+operation as hardware-agnostic operations, which are then translated
+into low-level code, and in some circumstances certain optimisations
+can be automatically applied.
 
 Gemmini is a hobby project, made purely out of enjoyment. This readme
 is also intended for people who may have some curiosity about the
-project, rather than using it for serious HPC work, at least at the
-current very early stage.
+project, or who may want to contribute.
 
 In this current early state, Gemmini only supports the microkernels of
 GEMM operations (hence the name), and only targets CPUs, using C. This
@@ -190,9 +193,9 @@ even though the usual algorithm suggests 8 x 4.
 
 This is most likely because pre-fetching is not currently implemented,
 so 15 of the 16 vector registers being used in an 8 x 6 microkernel
-allows for more useful work to be done, whereas 8 x 4 microkernels use
-only 11 of 16. Without prefetching, the latter will be less
-effective. Prefetching will be implemented in a future update.
+allows for more useful work to be done in parallel, whereas 8 x 4
+microkernels use only 11 of 16. Without prefetching, the latter will
+be less effective. Prefetching will be implemented in a future update.
 
 You are free to try any legal parameters out and completely ignore
 these suggestions, and may even find better performance. This is

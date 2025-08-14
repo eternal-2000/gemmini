@@ -78,12 +78,15 @@ For now, assumes all inputs and targets are matrix objects, and only handles out
 	(make-simple-var-list arg-list)))))
 
 (defun genseq-avx (genseq register-width)
+  "Expands GENSEQ, applies optimisations, and calls GENOP-AVX to make AST.
+Targets registers with REGISTER-WIDTH."
   (let ((body (fuse-loops (expand-genseq genseq))))
     (mapcar (lambda (x)
 	      (genop-avx x register-width))
 	    body)))
 
 (defun genop-avx (x register-width)
+  "Converts GENOP structure X to AST, targeting registers with REGISTER-WIDTH."
   (if (eq (first x) 'genop-dag) (genop-dag-avx x register-width)
       (ecase (second x)
 	(outer-product
@@ -92,6 +95,7 @@ For now, assumes all inputs and targets are matrix objects, and only handles out
 				 register-width)))))
 
 (defun genop-dag-avx (x register-width)
+  "Converts GENOP-DAG structure X to AST, targeting registers with REGISTER-WIDTH."
   (ecase (second x)
     (outer-product
      (if (common-inputs-p x)
@@ -101,12 +105,15 @@ For now, assumes all inputs and targets are matrix objects, and only handles out
 	 (error "Only common input dags implemented for now!")))))
 
 (defun make-avx-outer-product (inputs targets register-width)
+  "Generates outer product AST for registers with REGISTER-WIDTH.
+Takes vector INPUTS, and stores outer product in TARGETS."
   (list
    (make-avx-initialise inputs targets register-width)
    (make-avx-fma-loop inputs targets register-width)
    (make-avx-finalise targets register-width)))
 
 (defun make-avx-initialise (inputs targets register-width)
+  "Initialises INPUTS and TARGETS AST for registers with REGISTER-WIDTH."
   (apply #'make-block (append (mapcar (lambda (x)
 					(matrix-init x register-width))
 				      targets)
@@ -115,6 +122,8 @@ For now, assumes all inputs and targets are matrix objects, and only handles out
 				      inputs))))
 
 (defun make-avx-fma-loop (inputs targets register-width)
+  "Makes FMA loop where outer product of INPUTS is stored in TARGETS.
+Creates AST for registers with REGISTER-WIDTH."
   (let ((loop-index (make-var 'simple "k"))
 	(loop-length (make-var 'simple "p")))
     (make-loop *index-type*
@@ -125,6 +134,8 @@ For now, assumes all inputs and targets are matrix objects, and only handles out
 	       (make-avx-fma inputs targets register-width))))
 
 (defun make-avx-fma (inputs targets register-width)
+  "Vector FMA to take outer product of INPUTS and store in TARGETS.
+Creates AST for registers with REGISTER-WIDTH."
   (let ((col-vec (first inputs))
 	(row-vec (second inputs))
 	(tarpre (matrix-float-size (first targets))))
@@ -143,6 +154,7 @@ For now, assumes all inputs and targets are matrix objects, and only handles out
      (matrix-pointer-inc row-vec (matrix-columns row-vec)))))
 
 (defun make-avx-finalise (targets register-width)
+  "Stores matrix objects TARGETS. Creates AST for registers with REGISTER-WIDTH."
   (apply #'make-block (mapcar (lambda (x)
 				(matrix-store x register-width))
 			      targets)))

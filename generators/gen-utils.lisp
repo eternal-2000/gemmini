@@ -13,6 +13,8 @@ constant difference STEP."
       (cons start (range end (+ step start) step))))
 
 (defun zip-lists (&rest lists)
+  "Merges LISTS into new list by taking first element of each list in order, then second,
+and so on until at least one of LISTS is NIL."
   (if (some #'null lists) nil
       (append (mapcar #'first lists)
 	      (apply #'zip-lists (mapcar #'rest lists)))))
