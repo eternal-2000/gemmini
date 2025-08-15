@@ -20,13 +20,12 @@ and so on until at least one of LISTS is NIL."
 	      (apply #'zip-lists (mapcar #'rest lists)))))
 
 (defun interleave (a b &key (spacing 1) (initial-list nil))
-  "Interleaves elements of A and B with a given spacing and appends to optional initial list.
+  "Interleaves elements of A and B with given SPACING and appends to optional INITIAL-LIST.
 Creates new list by taking one element of A, then SPACING elements of B, and iterating until
-all elements of A and B have been used."
+all elements of A or B have been used."
   (append initial-list
-	  (apply #'append
-		 (zip-lists (mapcar #'list a)
-			    (group b spacing)))))
+	  (apply #'append (zip-lists (mapcar #'list a)
+				     (group b spacing)))))
 
 (defun group (list n)
   "Groups consecutive elements of LIST into nested sublists of length N."
