@@ -195,7 +195,7 @@ Currently only implemented for microkernel-level code."))
 ;;;; Mapping genops to architecture-specific ASTs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defgeneric make-avx-microkernel (op)
+(defgeneric make-avx-microkernel (op register-width)
   (:documentation
    "Constructs microkernel AST for OP in registers of REGISTER-WIDTH."))
 
