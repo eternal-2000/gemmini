@@ -23,14 +23,10 @@ and so on until at least one of LISTS is NIL."
   "Interleaves elements of A and B with a given spacing and appends to optional initial list.
 Creates new list by taking one element of A, then SPACING elements of B, and iterating until
 all elements of A and B have been used."
-  (labels ((alternate-append (x y accumulator)
-             (cond ((and (null x) (null y)) accumulator)
-		   ((null y) (append accumulator x))
-		   ((null x) (append accumulator y))
-		   (t (alternate-append (rest x) (rest y)
-					(append accumulator (cons (first x)
-								  (first y))))))))
-    (alternate-append a (group b spacing) initial-list)))
+  (append initial-list
+	  (apply #'append
+		 (zip-lists (mapcar #'list a)
+			    (group b spacing)))))
 
 (defun group (list n)
   "Groups consecutive elements of LIST into nested sublists of length N."
